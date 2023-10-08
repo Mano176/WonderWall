@@ -21,9 +21,9 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   await WindowManager.instance.ensureInitialized();
-  windowManager.waitUntilReadyToShow().then((_) async {
-    await windowManager.setTitle(appTitle);
-  });
+  await WindowManager.instance.waitUntilReadyToShow();
+  await WindowManager.instance.setTitle(appTitle);
+  await WindowManager.instance.setMinimumSize(const Size(1000, 580));
   runApp(const MyApp());
 }
 
@@ -86,7 +86,10 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     //initSystemTray();
     super.initState();
-    loadSettings().then((_) => newBackground());
+    () async {
+      await loadSettings();
+      //newBackground();
+    }();
   }
 
   Future<void> initSystemTray() async {
