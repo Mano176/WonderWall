@@ -16,6 +16,9 @@ const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
 
 void main() async {
+  const bool startHidden = bool.fromEnvironment("startHidden");
+  print("startHidden: $startHidden");
+
   Map<String, dynamic> secrets = jsonDecode(await File("secrets.json").readAsString());
   clientId = secrets["clientId"]!;
 
@@ -25,7 +28,7 @@ void main() async {
   await windowManager.setTitle(appTitle);
   await windowManager.setMinimumSize(const Size(1000, 580));
   await windowManager.center();
-  runApp(const MyApp());
+  runApp(const MyApp(startHidden: startHidden));
 }
 
 void newBackgroundFromGroups(List<Group> groups) async {
@@ -60,7 +63,9 @@ void newBackgroundFromSearchTerm(String searchTerm) async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool startHidden;
+
+  const MyApp({super.key, this.startHidden = false});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -97,10 +102,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
     () async {
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
-      print("adding listener");
+      if (!widget.startHidden) {
+        windowManager.show();
+      }
       initSystemTray();
       await loadSettings();
-      newBackgroundFromGroups(groups);
+      //newBackgroundFromGroups(groups);
     }();
   }
 
@@ -117,7 +124,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     await menu.buildFrom([
       MenuItemLabel(label: "Show", onClicked: (menuItem) => appWindow.show()),
       MenuItemLabel(label: "Hide", onClicked: (menuItem) => appWindow.hide()),
-      MenuItemLabel(label: "Exit", onClicked: (menuItem) => appWindow.close()),
+      MenuItemLabel(label: "Exit", onClicked: (menuItem) => windowManager.destroy()),
     ]);
     await systemTray.setContextMenu(menu);
 
