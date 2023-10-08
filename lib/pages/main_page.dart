@@ -1,39 +1,12 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:system_tray/system_tray.dart';
 import 'package:random_desktop_background/data.dart';
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
-  @override
-  State<MainPage> createState() => _MainPageState();
-}
+class MainPage extends StatelessWidget {
+  final List<Group> groups;
+  final Function(List<Group> groups) setGroups;
 
-class _MainPageState extends State<MainPage> {
-  late List<Group> groups = [];
-
-  @override
-  void initState() {
-    //initSystemTray();
-    super.initState();
-    () async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? groupsString = prefs.getString("groups");
-      setState(() {
-        if (groupsString != null) {
-          groups = List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
-        }
-      });
-    }();
-  }
-
-  void save() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString("groups", jsonEncode(groups.map((e) => e.toMap()).toList()));
-  }
+  const MainPage({super.key, required this.groups, required this.setGroups});
 
   Widget checkboxListTile({
     required String title,
@@ -93,34 +66,117 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Future<void> initSystemTray() async {
-    String path = 'assets/logo.ico';
-
-    final AppWindow appWindow = AppWindow();
-    final SystemTray systemTray = SystemTray();
-
-    await systemTray.initSystemTray(
-      title: "system tray",
-      iconPath: path,
+  Widget buildGroup({required Group group, required Function(List<Group> groups) setGroups}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 50,
+              height: 50,
+              child: AnimatedRotation(
+                turns: group.open ? 0 : -0.25,
+                duration: const Duration(milliseconds: 100),
+                child: IconButton(
+                    onPressed: () {
+                      group.open = !group.open;
+                      setGroups(groups);
+                    },
+                    icon: const Icon(Icons.arrow_drop_down)),
+              ),
+            ),
+            Expanded(
+              child: checkboxListTile(
+                title: group.title,
+                titleSize: 20,
+                selected: group.enabled,
+                isHovering: group.isHovering,
+                isEditing: group.isEditing,
+                onSelected: (value) {
+                  group.enabled = value!;
+                  setGroups(groups);
+                },
+                onHover: (value) {
+                  if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
+                  group.isHovering = value ?? false;
+                  setGroups(groups);
+                },
+                onEdit: () {
+                  group.isEditing = !group.isEditing;
+                  setGroups(groups);
+                },
+                onDelete: () {
+                  groups.remove(group);
+                  setGroups(groups);
+                },
+                setTitle: (value) {
+                  group.title = value;
+                  setGroups(groups);
+                },
+              ),
+            ),
+          ],
+        ),
+        AnimatedSize(
+          alignment: Alignment.topLeft,
+          duration: const Duration(milliseconds: 100),
+          child: SizedBox(
+            height: group.open ? null : 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var element in group.searchTerms)
+                    checkboxListTile(
+                      title: element.title,
+                      titleSize: 15,
+                      selected: element.enabled,
+                      isHovering: element.isHovering,
+                      isEditing: element.isEditing,
+                      onSelected: group.enabled
+                          ? (value) {
+                              element.enabled = value!;
+                              setGroups(groups);
+                            }
+                          : null,
+                      onHover: (value) {
+                        if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
+                        element.isHovering = value ?? false;
+                        setGroups(groups);
+                      },
+                      onEdit: () {
+                        element.isEditing = !element.isEditing;
+                        setGroups(groups);
+                      },
+                      onDelete: () {
+                        group.searchTerms.remove(element);
+                        setGroups(groups);
+                      },
+                      setTitle: (value) {
+                        element.title = value;
+                        setGroups(groups);
+                      },
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: OutlinedButton(
+                        onPressed: () {
+                          GroupElement element = GroupElement("New Search Term", true);
+                          element.isEditing = true;
+                          group.searchTerms.add(element);
+                          setGroups(groups);
+                        },
+                        child: const Text("Add Search Term")),
+                  )
+                ],
+              ),
+            ),
+          ),
+        )
+      ],
     );
-
-    final Menu menu = Menu();
-    await menu.buildFrom([
-      MenuItemLabel(label: "Show", onClicked: (menuItem) => appWindow.show()),
-      MenuItemLabel(label: "Hide", onClicked: (menuItem) => appWindow.hide()),
-      MenuItemLabel(label: "Exit", onClicked: (menuItem) => appWindow.close()),
-    ]);
-    await systemTray.setContextMenu(menu);
-
-    // handle system tray event
-    systemTray.registerSystemTrayEventHandler((eventName) {
-      debugPrint("eventName: $eventName");
-      if (eventName == kSystemTrayEventClick) {
-        appWindow.show();
-      } else if (eventName == kSystemTrayEventRightClick) {
-        systemTray.popUpContextMenu();
-      }
-    });
   }
 
   @override
@@ -132,147 +188,21 @@ class _MainPageState extends State<MainPage> {
           child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text("Search Terms", style: TextStyle(fontSize: 30)),
             for (Group group in groups)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 50,
-                        height: 50,
-                        child: AnimatedRotation(
-                          turns: group.open ? 0 : -0.25,
-                          duration: const Duration(milliseconds: 100),
-                          child: IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  group.open = !group.open;
-                                });
-                              },
-                              icon: const Icon(Icons.arrow_drop_down)),
-                        ),
-                      ),
-                      Expanded(
-                        child: checkboxListTile(
-                          title: group.title,
-                          titleSize: 20,
-                          selected: group.enabled,
-                          isHovering: group.isHovering,
-                          isEditing: group.isEditing,
-                          onSelected: (value) {
-                            setState(() {
-                              group.enabled = value!;
-                              save();
-                            });
-                          },
-                          onHover: (value) {
-                            if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
-                            setState(() {
-                              group.isHovering = value ?? false;
-                            });
-                          },
-                          onEdit: () {
-                            setState(() {
-                              group.isEditing = !group.isEditing;
-                            });
-                          },
-                          onDelete: () {
-                            setState(() {
-                              groups.remove(group);
-                              save();
-                            });
-                          },
-                          setTitle: (value) {
-                            setState(() {
-                              group.title = value;
-                              save();
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  AnimatedSize(
-                    alignment: Alignment.topCenter,
-                    duration: const Duration(milliseconds: 100),
-                    child: SizedBox(
-                      height: group.open ? null : 0,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 100),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (var element in group.searchTerms)
-                              checkboxListTile(
-                                title: element.title,
-                                titleSize: 15,
-                                selected: element.enabled,
-                                isHovering: element.isHovering,
-                                isEditing: element.isEditing,
-                                onSelected: group.enabled
-                                    ? (value) {
-                                        setState(() {
-                                          element.enabled = value!;
-                                          save();
-                                        });
-                                      }
-                                    : null,
-                                onHover: (value) {
-                                  if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
-                                  setState(() {
-                                    element.isHovering = value ?? false;
-                                  });
-                                },
-                                onEdit: () {
-                                  setState(() {
-                                    element.isEditing = !element.isEditing;
-                                  });
-                                },
-                                onDelete: () {
-                                  setState(() {
-                                    group.searchTerms.remove(element);
-                                    save();
-                                  });
-                                },
-                                setTitle: (value) {
-                                  setState(() {
-                                    element.title = value;
-                                    save();
-                                  });
-                                },
-                              ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: OutlinedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      GroupElement element = GroupElement("New Search Term", true);
-                                      element.isEditing = true;
-                                      group.searchTerms.add(element);
-                                      save();
-                                    });
-                                  },
-                                  child: const Text("Add Search Term")),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                ],
+              buildGroup(
+                group: group,
+                setGroups: setGroups,
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
               child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      Group group = Group("New Group", true, true, []);
-                      group.isEditing = true;
-                      groups.add(group);
-                      save();
-                    });
-                  },
-                  child: const Text("Add Group")),
+                onPressed: () {
+                  Group group = Group("New Group", true, true, []);
+                  group.isEditing = true;
+                  groups.add(group);
+                  setGroups(groups);
+                },
+                child: const Text("Add Group"),
+              ),
             )
           ]),
         ),

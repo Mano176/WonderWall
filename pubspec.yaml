@@ -41,6 +41,7 @@ dependencies:
   win32: ^5.0.9
   window_manager: ^0.3.6
   material_symbols_icons: ^4.2668.0
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
