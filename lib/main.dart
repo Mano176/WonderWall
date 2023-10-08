@@ -20,10 +20,11 @@ void main() async {
   clientId = secrets["clientId"]!;
 
   WidgetsFlutterBinding.ensureInitialized();
-  await WindowManager.instance.ensureInitialized();
-  await WindowManager.instance.waitUntilReadyToShow();
-  await WindowManager.instance.setTitle(appTitle);
-  await WindowManager.instance.setMinimumSize(const Size(1000, 580));
+  await windowManager.ensureInitialized();
+  await windowManager.waitUntilReadyToShow();
+  await windowManager.setTitle(appTitle);
+  await windowManager.setMinimumSize(const Size(1000, 580));
+  await windowManager.center();
   runApp(const MyApp());
 }
 
@@ -65,7 +66,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WindowListener {
   late List<Group> groups = [];
 
   void saveSettings() async {
@@ -92,23 +93,24 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-    //initSystemTray();
     super.initState();
     () async {
+      windowManager.addListener(this);
+      windowManager.setPreventClose(true);
+      print("adding listener");
+      initSystemTray();
       await loadSettings();
       newBackgroundFromGroups(groups);
     }();
   }
 
   Future<void> initSystemTray() async {
-    String path = 'assets/logo.ico';
-
     final AppWindow appWindow = AppWindow();
     final SystemTray systemTray = SystemTray();
 
     await systemTray.initSystemTray(
-      title: "system tray",
-      iconPath: path,
+      title: appTitle,
+      iconPath: "assets/logo.ico",
     );
 
     final Menu menu = Menu();
@@ -119,12 +121,9 @@ class _MyAppState extends State<MyApp> {
     ]);
     await systemTray.setContextMenu(menu);
 
-    // handle system tray event
+    // handle system tray left and right click
     systemTray.registerSystemTrayEventHandler((eventName) {
-      debugPrint("eventName: $eventName");
-      if (eventName == kSystemTrayEventClick) {
-        appWindow.show();
-      } else if (eventName == kSystemTrayEventRightClick) {
+      if (eventName == kSystemTrayEventClick || eventName == kSystemTrayEventRightClick) {
         systemTray.popUpContextMenu();
       }
     });
@@ -137,5 +136,10 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
       home: MainPage(groups: groups, setGroups: setGroups),
     );
+  }
+
+  @override
+  void onWindowClose() async {
+    await windowManager.hide();
   }
 }
