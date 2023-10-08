@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:random_desktop_background/data.dart';
+import 'package:random_desktop_background/main.dart';
 
 class MainPage extends StatelessWidget {
   final List<Group> groups;
@@ -18,6 +19,7 @@ class MainPage extends StatelessWidget {
     required Function(bool?)? onHover,
     required Function()? onEdit,
     required Function()? onDelete,
+    required Function()? onSetAsWallpaper,
     required Function(String)? setTitle,
   }) {
     TextEditingController textController = TextEditingController(text: title);
@@ -63,6 +65,11 @@ class MainPage extends StatelessWidget {
                   tooltip: "Delete",
                   onPressed: onDelete,
                   icon: const Icon(Symbols.delete),
+                ),
+                IconButton(
+                  tooltip: "Set as Wallpaper",
+                  onPressed: onSetAsWallpaper,
+                  icon: const Icon(Symbols.wallpaper),
                 ),
               ],
             ),
@@ -120,6 +127,9 @@ class MainPage extends StatelessWidget {
                   group.title = value;
                   setGroups(groups);
                 },
+                onSetAsWallpaper: () {
+                  newBackgroundFromGroup(group);
+                },
               ),
             ),
           ],
@@ -163,6 +173,9 @@ class MainPage extends StatelessWidget {
                       setTitle: (value) {
                         element.title = value;
                         setGroups(groups);
+                      },
+                      onSetAsWallpaper: () {
+                        newBackgroundFromSearchTerm(element.title);
                       },
                     ),
                   Padding(

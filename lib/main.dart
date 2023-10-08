@@ -27,6 +27,37 @@ void main() async {
   runApp(const MyApp());
 }
 
+void newBackgroundFromGroups(List<Group> groups) async {
+  if (groups.isEmpty) return;
+  Random random = Random();
+  Group group = groups[random.nextInt(groups.length)];
+  newBackgroundFromGroup(group, random);
+}
+
+void newBackgroundFromGroup(Group group, [Random? random]) async {
+  random ??= Random();
+  String searchTerm = group.searchTerms[random.nextInt(group.searchTerms.length)].title;
+  newBackgroundFromSearchTerm(searchTerm);
+}
+
+void newBackgroundFromSearchTerm(String searchTerm) async {
+  Map<String, String> params = {
+    "client_id": clientId,
+    "query": searchTerm,
+    "orientation": "landscape",
+  };
+  Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
+
+  String url = response["urls"]["raw"];
+  String photographer = response["user"]["name"];
+  String shareURL = response["links"]["html"];
+
+  Response imageResponse = await get(Uri.parse(url));
+  String path = "${Platform.environment["tmp"]!}\\$appTitle\\background.png";
+  await saveTempFile(imageResponse.bodyBytes, path);
+  changeWallpaper(path);
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -50,29 +81,6 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void newBackground() async {
-    if (groups.isEmpty) return;
-    Random random = Random();
-    Group group = groups[random.nextInt(groups.length)];
-    String searchTerm = group.searchTerms[random.nextInt(group.searchTerms.length)].title;
-
-    Map<String, String> params = {
-      "client_id": clientId,
-      "query": searchTerm,
-      "orientation": "landscape",
-    };
-    Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
-
-    String url = response["urls"]["raw"];
-    String photographer = response["user"]["name"];
-    String shareURL = response["links"]["html"];
-
-    Response imageResponse = await get(Uri.parse(url));
-    String path = "${Platform.environment["tmp"]!}\\$appTitle\\background.png";
-    await saveTempFile(imageResponse.bodyBytes, path);
-    changeWallpaper(path);
-  }
-
   void setGroups(List<Group> groups, {bool save = true}) {
     setState(() {
       this.groups = groups;
@@ -88,7 +96,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     () async {
       await loadSettings();
-      //newBackground();
+      newBackgroundFromGroups(groups);
     }();
   }
 
