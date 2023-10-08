@@ -52,12 +52,18 @@ class MainPage extends StatelessWidget {
             child: Row(
               children: [
                 IconButton(
-                    onPressed: () {
-                      setTitle!(textController.text);
-                      onEdit!();
-                    },
-                    icon: Icon(Symbols.edit, fill: isEditing ? 1 : 0)),
-                IconButton(onPressed: onDelete, icon: const Icon(Symbols.delete)),
+                  tooltip: "Edit",
+                  onPressed: () {
+                    setTitle!(textController.text);
+                    onEdit!();
+                  },
+                  icon: Icon(Symbols.edit, fill: isEditing ? 1 : 0),
+                ),
+                IconButton(
+                  tooltip: "Delete",
+                  onPressed: onDelete,
+                  icon: const Icon(Symbols.delete),
+                ),
               ],
             ),
           ),
