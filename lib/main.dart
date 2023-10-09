@@ -41,11 +41,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WindowListener {
   late List<Group> groups = [];
-  Map<String, String?> credits = {
-    "name": "Unknown",
-    "url": null,
-    "shareURL": null,
-  };
+  late Map<String, String?> credits;
 
   void newBackgroundFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
@@ -75,10 +71,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
     String url = response["urls"]["raw"];
     setState(() {
       credits = {
-        "name": response["user"]["name"],
-        "url": response["user"]["links"]["html"],
+        "photographer_name": response["user"]["name"],
+        "photographer_url": response["user"]["links"]["html"],
         "shareURL": response["links"]["html"],
       };
+      saveSettings();
       initSystemTray();
     });
 
@@ -91,6 +88,15 @@ class _MyAppState extends State<MyApp> with WindowListener {
   void saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString("groups", jsonEncode(groups.map((e) => e.toMap()).toList()));
+    if (credits["photographer_name"] != null) {
+      prefs.setString("photographer_name", credits["photographer_name"]!);
+    }
+    if (credits["photographer_url"] != null) {
+      prefs.setString("photographer_url", credits["photographer_url"]!);
+    }
+    if (credits["shareURL"] != null) {
+      prefs.setString("shareURL", credits["shareURL"]!);
+    }
   }
 
   Future<void> loadSettings() async {
@@ -99,6 +105,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
     if (groupsString != null) {
       setGroups(List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList()));
     }
+    credits = {
+      "photographer_name": prefs.getString("photographer_name") ?? "Unknown",
+      "photographer_url": prefs.getString("photographer_url"),
+      "shareURL": prefs.getString("shareURL"),
+    };
   }
 
   void setGroups(List<Group> groups, {bool save = true}) {
@@ -116,8 +127,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
     () async {
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
-      initSystemTray();
       await loadSettings();
+      initSystemTray();
       if (fromAutostart) {
         newBackgroundFromGroups(groups);
       } else {
@@ -146,9 +157,9 @@ class _MyAppState extends State<MyApp> with WindowListener {
         onClicked: (_) => launchUrl(Uri.parse(credits["shareURL"]!)),
       ),
       MenuItemLabel(
-        label: "Photographer: ${credits["name"]}",
-        enabled: credits["url"] != null,
-        onClicked: (_) => launchUrl(Uri.parse(credits["url"]!)),
+        label: "Photographer: ${credits["photographer_name"]}",
+        enabled: credits["photographer_url"] != null,
+        onClicked: (_) => launchUrl(Uri.parse(credits["photographer_url"]!)),
       ),
       MenuSeparator(),
       MenuItemLabel(label: "Settings", onClicked: (menuItem) => appWindow.show()),
