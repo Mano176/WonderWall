@@ -4,10 +4,11 @@ import 'dart:math';
 
 import 'package:http/http.dart';
 import 'package:random_desktop_background/data.dart';
-import 'package:random_desktop_background/pages/main_page.dart';
+import 'package:random_desktop_background/pages/settings.dart';
 import 'package:random_desktop_background/util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -31,44 +32,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-void newBackgroundFromGroups(List<Group> groups) async {
-  List<Group> groupsToChooseFrom =
-      groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
-  if (groupsToChooseFrom.isEmpty) return;
-  print("Step1");
-
-  Random random = Random();
-  Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
-  newBackgroundFromGroup(group, random);
-}
-
-void newBackgroundFromGroup(Group group, [Random? random]) async {
-  random ??= Random();
-  List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
-  if (searchTermsToChooseFrom.isEmpty) return;
-  print("Step2");
-  String searchTerm = searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title;
-  newBackgroundFromSearchTerm(searchTerm);
-}
-
-void newBackgroundFromSearchTerm(String searchTerm) async {
-  Map<String, String> params = {
-    "client_id": clientId,
-    "query": searchTerm,
-    "orientation": "landscape",
-  };
-  Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
-
-  String url = response["urls"]["raw"];
-  String photographer = response["user"]["name"];
-  String shareURL = response["links"]["html"];
-
-  Response imageResponse = await get(Uri.parse(url));
-  String path = "${Platform.environment["tmp"]!}\\$appTitle\\background.png";
-  await saveTempFile(imageResponse.bodyBytes, path);
-  changeWallpaper(path);
-}
-
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -78,6 +41,52 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WindowListener {
   late List<Group> groups = [];
+  Map<String, String?> credits = {
+    "name": "Unknown",
+    "url": null,
+    "shareURL": null,
+  };
+
+  void newBackgroundFromGroups(List<Group> groups) async {
+    List<Group> groupsToChooseFrom =
+        groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
+    if (groupsToChooseFrom.isEmpty) return;
+
+    Random random = Random();
+    Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
+    newBackgroundFromGroup(group, random);
+  }
+
+  void newBackgroundFromGroup(Group group, [Random? random]) async {
+    random ??= Random();
+    List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
+    if (searchTermsToChooseFrom.isEmpty) return;
+    String searchTerm = searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title;
+    newBackgroundFromSearchTerm(searchTerm);
+  }
+
+  void newBackgroundFromSearchTerm(String searchTerm) async {
+    Map<String, String> params = {
+      "client_id": clientId,
+      "query": searchTerm,
+      "orientation": "landscape",
+    };
+    Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
+    String url = response["urls"]["raw"];
+    setState(() {
+      credits = {
+        "name": response["user"]["name"],
+        "url": response["user"]["links"]["html"],
+        "shareURL": response["links"]["html"],
+      };
+      initSystemTray();
+    });
+
+    Response imageResponse = await get(Uri.parse(url));
+    String path = "${Platform.environment["tmp"]!}\\$appTitle\\background.png";
+    await saveTempFile(imageResponse.bodyBytes, path);
+    changeWallpaper(path);
+  }
 
   void saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -122,14 +131,27 @@ class _MyAppState extends State<MyApp> with WindowListener {
     final SystemTray systemTray = SystemTray();
 
     await systemTray.initSystemTray(
-      title: appTitle,
+      toolTip: appTitle,
       iconPath: "assets/logo.ico",
     );
 
     final Menu menu = Menu();
     await menu.buildFrom([
-      MenuItemLabel(label: "Show", onClicked: (menuItem) => appWindow.show()),
-      MenuItemLabel(label: "Hide", onClicked: (menuItem) => appWindow.hide()),
+      MenuItemLabel(label: "New Background", onClicked: (menuItem) => newBackgroundFromGroups(groups)),
+      MenuSeparator(),
+      MenuItemLabel(label: "Credits:", enabled: false),
+      MenuItemLabel(
+        label: "Open image on Unsplash",
+        enabled: credits["shareURL"] != null,
+        onClicked: (_) => launchUrl(Uri.parse(credits["shareURL"]!)),
+      ),
+      MenuItemLabel(
+        label: "Photographer: ${credits["name"]}",
+        enabled: credits["url"] != null,
+        onClicked: (_) => launchUrl(Uri.parse(credits["url"]!)),
+      ),
+      MenuSeparator(),
+      MenuItemLabel(label: "Settings", onClicked: (menuItem) => appWindow.show()),
       MenuItemLabel(label: "Exit", onClicked: (menuItem) => windowManager.destroy()),
     ]);
     await systemTray.setContextMenu(menu);
@@ -147,7 +169,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
     return MaterialApp(
       title: appTitle,
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
-      home: MainPage(groups: groups, setGroups: setGroups),
+      home: Settings(
+        groups: groups,
+        setGroups: setGroups,
+        newBackgroundFromGroup: newBackgroundFromGroup,
+        newBackgroundFromSearchTerm: newBackgroundFromSearchTerm,
+      ),
     );
   }
 

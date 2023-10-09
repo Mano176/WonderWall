@@ -1,13 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:random_desktop_background/data.dart';
-import 'package:random_desktop_background/main.dart';
 
-class MainPage extends StatelessWidget {
+class Settings extends StatelessWidget {
   final List<Group> groups;
   final Function(List<Group> groups) setGroups;
+  final Function(Group group, [Random? random]) newBackgroundFromGroup;
+  final Function(String searchTerm) newBackgroundFromSearchTerm;
 
-  const MainPage({super.key, required this.groups, required this.setGroups});
+  const Settings(
+      {super.key, required this.groups, required this.setGroups, required this.newBackgroundFromGroup, required this.newBackgroundFromSearchTerm});
 
   Widget checkboxListTile({
     required String title,
