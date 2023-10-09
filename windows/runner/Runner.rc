@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.mano176" "\0"
-            VALUE "FileDescription", "random_desktop_background" "\0"
+            VALUE "FileDescription", "WonderWall" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "random_desktop_background" "\0"
+            VALUE "InternalName", "WonderWall" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.mano176. All rights reserved." "\0"
-            VALUE "OriginalFilename", "random_desktop_background.exe" "\0"
-            VALUE "ProductName", "random_desktop_background" "\0"
+            VALUE "OriginalFilename", "wonderwall.exe" "\0"
+            VALUE "ProductName", "WonderWall" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

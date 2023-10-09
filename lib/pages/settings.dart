@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:random_desktop_background/data.dart';
+import 'package:wonderwall/data.dart';
 
 class Settings extends StatelessWidget {
   final List<Group> groups;

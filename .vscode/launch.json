@@ -5,19 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "random_desktop_background",
+            "name": "wonderwall",
             "request": "launch",
             "type": "dart",
             "args": ["--dart-define", "fromAutostart=false"]
         },
         {
-            "name": "random_desktop_background (profile mode)",
+            "name": "wonderwall (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "random_desktop_background (release mode)",
+            "name": "wonderwall (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
