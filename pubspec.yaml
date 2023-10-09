@@ -34,6 +34,8 @@ dependencies:
   material_symbols_icons: ^4.2668.0
   http: ^1.1.0
   url_launcher: ^6.1.14
+  launch_at_startup: ^0.2.2
+  package_info_plus: ^5.0.0
 
 dev_dependencies:
   flutter_test:

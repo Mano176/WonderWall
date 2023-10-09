@@ -192,6 +192,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.8.1"
+  launch_at_startup:
+    dependency: "direct main"
+    description:
+      name: launch_at_startup
+      sha256: "93fc5638e088290004fae358bae691486673d469957d461d9dae5b12248593eb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
   lints:
     dependency: transitive
     description:
@@ -232,6 +240,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.0"
+  package_info_plus:
+    dependency: "direct main"
+    description:
+      name: package_info_plus
+      sha256: "0351aaba3b267c4962ed73058a5f62a84de7e39670a20e2916a6baff2ffcfbe5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.0"
+  package_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: package_info_plus_platform_interface
+      sha256: "9bc8ba46813a4cc42c66ab781470711781940780fd8beddd0c3da62506d3a6c6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   path:
     dependency: transitive
     description:
@@ -525,6 +549,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.9"
+  win32_registry:
+    dependency: transitive
+    description:
+      name: win32_registry
+      sha256: "41fd8a189940d8696b1b810efb9abcf60827b6cbfab90b0c43e8439e3a39d85a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
   window_manager:
     dependency: "direct main"
     description:

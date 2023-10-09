@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:http/http.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:random_desktop_background/data.dart';
 import 'package:random_desktop_background/pages/settings.dart';
 import 'package:random_desktop_background/util.dart';
@@ -24,6 +26,13 @@ void main() async {
   clientId = secrets["clientId"]!;
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  launchAtStartup.setup(
+    appName: packageInfo.appName,
+    appPath: Platform.resolvedExecutable,
+  );
+
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow();
   await windowManager.setTitle(appTitle);
@@ -163,6 +172,18 @@ class _MyAppState extends State<MyApp> with WindowListener {
       ),
       MenuSeparator(),
       MenuItemLabel(label: "Settings", onClicked: (menuItem) => appWindow.show()),
+      MenuItemCheckbox(
+        label: "Autostart",
+        checked: await launchAtStartup.isEnabled(),
+        onClicked: (_) async {
+          if (await launchAtStartup.isEnabled()) {
+            launchAtStartup.disable();
+          } else {
+            launchAtStartup.enable();
+          }
+          initSystemTray();
+        },
+      ),
       MenuItemLabel(label: "Exit", onClicked: (menuItem) => windowManager.destroy()),
     ]);
     await systemTray.setContextMenu(menu);
