@@ -16,8 +16,7 @@ const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
 
 void main() async {
-  const bool startHidden = bool.fromEnvironment("startHidden");
-  print("startHidden: $startHidden");
+  const bool fromAutostart = bool.fromEnvironment("fromAutostart");
 
   Map<String, dynamic> secrets = jsonDecode(await File("secrets.json").readAsString());
   clientId = secrets["clientId"]!;
@@ -28,7 +27,7 @@ void main() async {
   await windowManager.setTitle(appTitle);
   await windowManager.setMinimumSize(const Size(1000, 580));
   await windowManager.center();
-  runApp(const MyApp(startHidden: startHidden));
+  runApp(const MyApp(fromAutostart: fromAutostart));
 }
 
 void newBackgroundFromGroups(List<Group> groups) async {
@@ -63,9 +62,9 @@ void newBackgroundFromSearchTerm(String searchTerm) async {
 }
 
 class MyApp extends StatefulWidget {
-  final bool startHidden;
+  final bool fromAutostart;
 
-  const MyApp({super.key, this.startHidden = false});
+  const MyApp({super.key, this.fromAutostart = false});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -102,12 +101,13 @@ class _MyAppState extends State<MyApp> with WindowListener {
     () async {
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
-      if (!widget.startHidden) {
-        windowManager.show();
-      }
       initSystemTray();
       await loadSettings();
-      //newBackgroundFromGroups(groups);
+      if (widget.fromAutostart) {
+        newBackgroundFromGroups(groups);
+      } else {
+        windowManager.show();
+      }
     }();
   }
 

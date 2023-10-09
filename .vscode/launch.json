@@ -8,7 +8,7 @@
             "name": "random_desktop_background",
             "request": "launch",
             "type": "dart",
-            "args": ["--dart-define", "startHidden=true"]
+            "args": ["--dart-define", "fromAutostart=true"]
         },
         {
             "name": "random_desktop_background (profile mode)",
