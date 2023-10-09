@@ -14,9 +14,10 @@ import 'package:flutter/material.dart';
 const String appTitle = "Random Desktop Background";
 const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
+late final bool fromAutostart;
 
 void main() async {
-  const bool fromAutostart = bool.fromEnvironment("fromAutostart");
+  fromAutostart = const bool.fromEnvironment("fromAutostart");
 
   Map<String, dynamic> secrets = jsonDecode(await File("secrets.json").readAsString());
   clientId = secrets["clientId"]!;
@@ -27,19 +28,26 @@ void main() async {
   await windowManager.setTitle(appTitle);
   await windowManager.setMinimumSize(const Size(1000, 580));
   await windowManager.center();
-  runApp(const MyApp(fromAutostart: fromAutostart));
+  runApp(const MyApp());
 }
 
 void newBackgroundFromGroups(List<Group> groups) async {
-  if (groups.isEmpty) return;
+  List<Group> groupsToChooseFrom =
+      groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
+  if (groupsToChooseFrom.isEmpty) return;
+  print("Step1");
+
   Random random = Random();
-  Group group = groups[random.nextInt(groups.length)];
+  Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
   newBackgroundFromGroup(group, random);
 }
 
 void newBackgroundFromGroup(Group group, [Random? random]) async {
   random ??= Random();
-  String searchTerm = group.searchTerms[random.nextInt(group.searchTerms.length)].title;
+  List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
+  if (searchTermsToChooseFrom.isEmpty) return;
+  print("Step2");
+  String searchTerm = searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title;
   newBackgroundFromSearchTerm(searchTerm);
 }
 
@@ -62,9 +70,7 @@ void newBackgroundFromSearchTerm(String searchTerm) async {
 }
 
 class MyApp extends StatefulWidget {
-  final bool fromAutostart;
-
-  const MyApp({super.key, this.fromAutostart = false});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -103,7 +109,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
       windowManager.setPreventClose(true);
       initSystemTray();
       await loadSettings();
-      if (widget.fromAutostart) {
+      if (fromAutostart) {
         newBackgroundFromGroups(groups);
       } else {
         windowManager.show();
