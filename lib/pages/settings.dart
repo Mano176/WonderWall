@@ -185,19 +185,21 @@ class Settings extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: OutlinedButton(
-                        onPressed: () {
-                          GroupElement element = GroupElement("New Search Term", true);
-                          element.isEditing = true;
-                          group.searchTerms.add(element);
-                          setGroups(groups);
-                        },
-                        child: const Text("Add Search Term")),
+                      onPressed: () {
+                        GroupElement element = GroupElement("New Search Term", true);
+                        element.isEditing = true;
+                        group.searchTerms.add(element);
+                        setGroups(groups);
+                      },
+                      child: const Text("Add Search Term"),
+                    ),
                   )
                 ],
               ),
             ),
           ),
-        )
+        ),
+        const Divider(),
       ],
     );
   }

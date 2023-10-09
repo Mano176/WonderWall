@@ -31,6 +31,7 @@ void main() async {
   launchAtStartup.setup(
     appName: packageInfo.appName,
     appPath: Platform.resolvedExecutable,
+    args: ["--dart-define", "fromAutostart=true"],
   );
 
   await windowManager.ensureInitialized();
