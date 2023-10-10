@@ -1,4 +1,5 @@
 secrets.json
+/build_output/
 
 # Miscellaneous
 *.class
