@@ -279,10 +279,6 @@ class Settings extends StatelessWidget {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(onPressed: () => newWallpaperFromGroups(groups), child: const Text("New Wallpaper")),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
                                 child: OutlinedButton(
                                   onPressed: credits["shareURL"] == null ? null : () => launchUrl(Uri.parse(credits["shareURL"]!)),
                                   child: const Text("Open image on Unsplash"),
@@ -294,6 +290,14 @@ class Settings extends StatelessWidget {
                                   onPressed: credits["photographer_url"] == null ? null : () => launchUrl(Uri.parse(credits["photographer_url"]!)),
                                   child: Text("Photographer:\n${credits["photographer_name"]}", textAlign: TextAlign.center),
                                 ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 18.0),
+                                child: Divider(),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: OutlinedButton(onPressed: () => newWallpaperFromGroups(groups), child: const Text("New Wallpaper")),
                               ),
                             ],
                           ),

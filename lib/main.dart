@@ -38,7 +38,7 @@ void main() async {
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow();
   await windowManager.setTitle(appTitle);
-  await windowManager.setMinimumSize(const Size(1000, 600));
+  await windowManager.setMinimumSize(const Size(1000, 800));
   await windowManager.center();
   runApp(const MyApp());
 }
