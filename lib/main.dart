@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     String url = response["urls"]["raw"];
     setState(() {
       credits = {
-        "photographer_name": response["user"]["name"],
+        "photographer_name": const Utf8Codec().decode((response["user"]["name"] as String).codeUnits),
         "photographer_url": response["user"]["links"]["html"],
         "shareURL": response["links"]["html"],
       };
@@ -182,7 +182,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
         onClicked: (_) => launchUrl(Uri.parse(credits["shareURL"]!)),
       ),
       MenuItemLabel(
-        label: "Photographer: ${credits["photographer_name"]}",
+        label: "Photographer: ${credits["photographer_name"]!}",
         enabled: credits["photographer_url"] != null,
         onClicked: (_) => launchUrl(Uri.parse(credits["photographer_url"]!)),
       ),
