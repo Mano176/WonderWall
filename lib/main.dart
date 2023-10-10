@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -23,10 +24,10 @@ final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpa
 void main() async {
   fromAutostart = const bool.fromEnvironment("fromAutostart");
 
-  Map<String, dynamic> secrets = jsonDecode(await File("secrets.json").readAsString());
-  clientId = secrets["clientId"]!;
-
   WidgetsFlutterBinding.ensureInitialized();
+
+  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/secrets.json"));
+  clientId = secrets["clientId"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   launchAtStartup.setup(
