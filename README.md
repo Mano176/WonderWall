@@ -20,7 +20,13 @@ A simple application for generating windows wallpapers, with following features:
     System tray
 </p>
 
+## Dependencies
+To build your own version of Wonderwall you need to install the following dependencies:
+- An [Unsplash](https://unsplash.com)-Account
+- An installed version of [Flutter](https://flutter.dev/)
+
 ## Installation
+
 
 To install your own version of Wonderwall follow these 3 steps:
 1. Clone the repository with `git clone https://github.com/Mano176/WonderWall`
