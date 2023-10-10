@@ -21,8 +21,11 @@ late final String clientId;
 late final bool fromAutostart;
 final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.png";
 
-void main() async {
-  fromAutostart = const bool.fromEnvironment("fromAutostart");
+void main(args) async {
+  args = {
+    for (var arg in [for (var arg in args) arg.split("=")]) arg[0]: arg[1]
+  };
+  fromAutostart = bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
 
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -33,7 +36,7 @@ void main() async {
   launchAtStartup.setup(
     appName: packageInfo.appName,
     appPath: Platform.resolvedExecutable,
-    args: ["--dart-define", "fromAutostart=true"],
+    args: ["fromAutostart=true"],
   );
 
   await windowManager.ensureInitialized();

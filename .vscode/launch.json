@@ -8,7 +8,6 @@
             "name": "wonderwall",
             "request": "launch",
             "type": "dart",
-            "args": ["--dart-define", "fromAutostart=false"]
         },
         {
             "name": "wonderwall (profile mode)",
