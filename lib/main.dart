@@ -59,25 +59,25 @@ class _MyAppState extends State<MyApp> with WindowListener {
     "shareURL": null,
   };
 
-  void newBackgroundFromGroups(List<Group> groups) async {
+  void newWallpaperFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
         groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
     if (groupsToChooseFrom.isEmpty) return;
 
     Random random = Random();
     Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
-    newBackgroundFromGroup(group, random);
+    newWallpaperFromGroup(group, random);
   }
 
-  void newBackgroundFromGroup(Group group, [Random? random]) async {
+  void newWallpaperFromGroup(Group group, [Random? random]) async {
     random ??= Random();
     List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
     if (searchTermsToChooseFrom.isEmpty) return;
     String searchTerm = searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title;
-    newBackgroundFromSearchTerm(searchTerm);
+    newWallpaperFromSearchTerm(searchTerm);
   }
 
-  void newBackgroundFromSearchTerm(String searchTerm) async {
+  void newWallpaperFromSearchTerm(String searchTerm) async {
     if (!searchTerm.toLowerCase().contains("wallpaper")) {
       searchTerm += " wallpaper";
     }
@@ -155,7 +155,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
       await loadSettings();
       initSystemTray();
       if (fromAutostart) {
-        newBackgroundFromGroups(groups);
+        newWallpaperFromGroups(groups);
       } else {
         windowManager.show();
       }
@@ -173,7 +173,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
     final Menu menu = Menu();
     await menu.buildFrom([
-      MenuItemLabel(label: "New Background", onClicked: (menuItem) => newBackgroundFromGroups(groups)),
+      MenuItemLabel(label: "New Wallpaper", onClicked: (menuItem) => newWallpaperFromGroups(groups)),
       MenuSeparator(),
       MenuItemLabel(label: "Credits:", enabled: false),
       MenuItemLabel(
@@ -222,9 +222,9 @@ class _MyAppState extends State<MyApp> with WindowListener {
         credits: credits,
         groups: groups,
         setGroups: setGroups,
-        newBackgroundFromGroups: newBackgroundFromGroups,
-        newBackgroundFromGroup: newBackgroundFromGroup,
-        newBackgroundFromSearchTerm: newBackgroundFromSearchTerm,
+        newWallpaperFromGroups: newWallpaperFromGroups,
+        newWallpaperFromGroup: newWallpaperFromGroup,
+        newWallpaperFromSearchTerm: newWallpaperFromSearchTerm,
       ),
     );
   }

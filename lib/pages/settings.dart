@@ -10,9 +10,9 @@ class Settings extends StatelessWidget {
   final Map<String, String?> credits;
   final List<Group> groups;
   final Function(List<Group> groups) setGroups;
-  final Function(List<Group> groups) newBackgroundFromGroups;
-  final Function(Group group, [Random? random]) newBackgroundFromGroup;
-  final Function(String searchTerm) newBackgroundFromSearchTerm;
+  final Function(List<Group> groups) newWallpaperFromGroups;
+  final Function(Group group, [Random? random]) newWallpaperFromGroup;
+  final Function(String searchTerm) newWallpaperFromSearchTerm;
 
   const Settings(
       {super.key,
@@ -20,9 +20,9 @@ class Settings extends StatelessWidget {
       required this.credits,
       required this.groups,
       required this.setGroups,
-      required this.newBackgroundFromGroups,
-      required this.newBackgroundFromGroup,
-      required this.newBackgroundFromSearchTerm});
+      required this.newWallpaperFromGroups,
+      required this.newWallpaperFromGroup,
+      required this.newWallpaperFromSearchTerm});
 
   Widget checkboxListTile({
     required String title,
@@ -143,7 +143,7 @@ class Settings extends StatelessWidget {
                   setGroups(groups);
                 },
                 onSetAsWallpaper: () {
-                  newBackgroundFromGroup(group);
+                  newWallpaperFromGroup(group);
                 },
               ),
             ),
@@ -190,7 +190,7 @@ class Settings extends StatelessWidget {
                         setGroups(groups);
                       },
                       onSetAsWallpaper: () {
-                        newBackgroundFromSearchTerm(element.title);
+                        newWallpaperFromSearchTerm(element.title);
                       },
                     ),
                   Padding(
@@ -279,7 +279,7 @@ class Settings extends StatelessWidget {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(onPressed: () => newBackgroundFromGroups(groups), child: const Text("New Background")),
+                                child: OutlinedButton(onPressed: () => newWallpaperFromGroups(groups), child: const Text("New Wallpaper")),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(5.0),
