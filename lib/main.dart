@@ -18,6 +18,7 @@ const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
 late final bool fromAutostart;
+final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.png";
 
 void main() async {
   fromAutostart = const bool.fromEnvironment("fromAutostart");
@@ -37,7 +38,7 @@ void main() async {
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow();
   await windowManager.setTitle(appTitle);
-  await windowManager.setMinimumSize(const Size(1000, 580));
+  await windowManager.setMinimumSize(const Size(1000, 600));
   await windowManager.center();
   runApp(const MyApp());
 }
@@ -50,8 +51,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WindowListener {
+  Image? currentWallpaper;
   late List<Group> groups = [];
-  late Map<String, String?> credits;
+  Map<String, String?> credits = {
+    "photographer_name": "Unknown",
+    "photographer_url": null,
+    "shareURL": null,
+  };
 
   void newBackgroundFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
@@ -93,9 +99,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
     });
 
     Response imageResponse = await get(Uri.parse(url));
-    String path = "${Platform.environment["tmp"]!}\\$appTitle\\background.png";
-    await saveTempFile(imageResponse.bodyBytes, path);
-    changeWallpaper(path);
+    setState(() {
+      currentWallpaper = Image.memory(imageResponse.bodyBytes);
+    });
+    await saveTempFile(imageResponse.bodyBytes, wallpaperPath);
+    changeWallpaper(wallpaperPath);
   }
 
   void saveSettings() async {
@@ -137,6 +145,10 @@ class _MyAppState extends State<MyApp> with WindowListener {
   @override
   void initState() {
     super.initState();
+    File file = File(wallpaperPath);
+    if (file.existsSync()) {
+      currentWallpaper = Image.file(file);
+    }
     () async {
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
@@ -206,8 +218,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
       title: appTitle,
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
       home: Settings(
+        currentWallpaper: currentWallpaper,
+        credits: credits,
         groups: groups,
         setGroups: setGroups,
+        newBackgroundFromGroups: newBackgroundFromGroups,
         newBackgroundFromGroup: newBackgroundFromGroup,
         newBackgroundFromSearchTerm: newBackgroundFromSearchTerm,
       ),

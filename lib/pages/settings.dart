@@ -2,16 +2,27 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wonderwall/data.dart';
 
 class Settings extends StatelessWidget {
+  final Image? currentWallpaper;
+  final Map<String, String?> credits;
   final List<Group> groups;
   final Function(List<Group> groups) setGroups;
+  final Function(List<Group> groups) newBackgroundFromGroups;
   final Function(Group group, [Random? random]) newBackgroundFromGroup;
   final Function(String searchTerm) newBackgroundFromSearchTerm;
 
   const Settings(
-      {super.key, required this.groups, required this.setGroups, required this.newBackgroundFromGroup, required this.newBackgroundFromSearchTerm});
+      {super.key,
+      required this.currentWallpaper,
+      required this.credits,
+      required this.groups,
+      required this.setGroups,
+      required this.newBackgroundFromGroups,
+      required this.newBackgroundFromGroup,
+      required this.newBackgroundFromSearchTerm});
 
   Widget checkboxListTile({
     required String title,
@@ -209,27 +220,91 @@ class Settings extends StatelessWidget {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: SingleChildScrollView(
-          child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text("Search Terms", style: TextStyle(fontSize: 30)),
-            for (Group group in groups)
-              buildGroup(
-                group: group,
-                setGroups: setGroups,
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text("Search Terms", style: TextStyle(fontSize: 30)),
+                  for (Group group in groups)
+                    buildGroup(
+                      group: group,
+                      setGroups: setGroups,
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Group group = Group("New Group", true, true, []);
+                        group.isEditing = true;
+                        groups.add(group);
+                        setGroups(groups);
+                      },
+                      child: const Text("Add Group"),
+                    ),
+                  )
+                ]),
               ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
-              child: OutlinedButton(
-                onPressed: () {
-                  Group group = Group("New Group", true, true, []);
-                  group.isEditing = true;
-                  groups.add(group);
-                  setGroups(groups);
-                },
-                child: const Text("Add Group"),
+            ),
+            const VerticalDivider(),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text("Current Wallpaper", style: TextStyle(fontSize: 30)),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 640,
+                          height: 640 / 1920 * 1080,
+                          child: Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: () {
+                                return currentWallpaper == null
+                                    ? const Text("No Wallpaper Selected", style: TextStyle(color: Colors.white))
+                                    : currentWallpaper!;
+                              }(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 400,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: OutlinedButton(onPressed: () => newBackgroundFromGroups(groups), child: const Text("New Background")),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: OutlinedButton(
+                                  onPressed: credits["shareURL"] == null ? null : () => launchUrl(Uri.parse(credits["shareURL"]!)),
+                                  child: const Text("Open image on Unsplash"),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: OutlinedButton(
+                                  onPressed: credits["photographer_url"] == null ? null : () => launchUrl(Uri.parse(credits["photographer_url"]!)),
+                                  child: Text("Photographer:\n${credits["photographer_name"]}", textAlign: TextAlign.center),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            )
-          ]),
+            ),
+          ],
         ),
       ),
     );
