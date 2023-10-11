@@ -20,18 +20,14 @@ A simple application for generating windows wallpapers, with following features:
     System tray
 </p>
 
-## Dependencies
-To build your own version of Wonderwall you need to install the following dependencies:
-- An [Unsplash](https://unsplash.com)-Account
-- An installed version of [Flutter](https://flutter.dev/)
 
 ## Installation
-
-
-To install your own version of Wonderwall follow these 3 steps:
-1. Clone the repository with `git clone https://github.com/Mano176/WonderWall`
-2. Head to [Unsplash](https://unsplash.com/developers) and create your own Unsplash-App. Then copy your client id from Unsplash and create a `/assets/secret.json` file like this:
+To install your own version of Wonderwall follow these steps:
+1. Download the newst version from [Releases](https://github.com/Mano176/WonderWall/releases)
+2. Head to [Unsplash](https://unsplash.com/developers) and create your own Unsplash-App. Then copy your client id
+3. Open the file `wonderwall/data/flutter_assets/assets/secrets.json`. The file looks like this:
     ```json
-    {"clientId": "your client id"}
+    {"clientId": "[your client id]"}
     ```
-3. Build your own version of Wonderwall with by executing the `build.bat` script. The output will be in `build_output/windows/release`
+4. Replace `[your client id]` with your Unsplash client id and save the file
+5. Run `wonderwall.exe`
