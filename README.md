@@ -1,10 +1,14 @@
 # [WonderWall](https://github.com/Mano176/WonderWall)
-[//]: <> (description_start)
+[//]: <> (badges_start)
+![GitHub release](https://img.shields.io/github/v/release/Mano176/WonderWall)
 ![GitHub top language](https://img.shields.io/github/languages/top/Mano176/WonderWall)
 ![repository size](https://img.shields.io/github/repo-size/Mano176/WonderWall)
 ![GitHub Repo stars](https://img.shields.io/github/stars/Mano176/WonderWall)
 
-A simple application for generating windows wallpapers, with following features:
+[//]: <> (badges_end)
+
+[//]: <> (description_start)
+A simple application for generating windows wallpapers, with following features
 - 🌄 Downloads beautiful high resolution images from [Unsplash.com](https://unsplash.com/)
 - ⏬ Images are downloaded based off customizable search terms
 - ✅ Search terms can be disabled and grouped for maximum flexibility
