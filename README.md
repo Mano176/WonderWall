@@ -1,4 +1,5 @@
-# WonderWall
+# [WonderWall](https://github.com/Mano176/WonderWall)
+[//]: <> (description_start)
 ![GitHub top language](https://img.shields.io/github/languages/top/Mano176/WonderWall)
 ![repository size](https://img.shields.io/github/repo-size/Mano176/WonderWall)
 ![GitHub Repo stars](https://img.shields.io/github/stars/Mano176/WonderWall)
@@ -10,6 +11,9 @@ A simple application for generating windows wallpapers, with following features:
 - 💨 Windows system tray integration to quickly change the wallpaper and open the settings
 - 📅 Windows autostart support to change your wallpaper daily
 
+[//]: <> (description_end)
+
+[//]: <> (images_start)
 <p align="center">
     <img src="screenshots/settings.png" alt="start screen" width="600"/><br>
     Settings
@@ -20,7 +24,9 @@ A simple application for generating windows wallpapers, with following features:
     System tray
 </p>
 
+[//]: <> (images_end)
 
+[//]: <> (installation_start)
 ## Installation
 To install your own version of Wonderwall follow these steps:
 1. Download the newst version from [Releases](https://github.com/Mano176/WonderWall/releases)
@@ -31,3 +37,5 @@ To install your own version of Wonderwall follow these steps:
     ```
 4. Replace `[your client id]` with your Unsplash client id and save the file
 5. Run `wonderwall.exe`
+
+[//]: <> (installation_end)
