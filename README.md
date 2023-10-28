@@ -8,7 +8,7 @@
 [//]: <> (badges_end)
 
 [//]: <> (description_start)
-A simple application for generating windows wallpapers, with following features
+A simple application for generating windows wallpapers, with the following features
 - 🌄 Downloads beautiful high resolution images from [Unsplash.com](https://unsplash.com/)
 - ⏬ Images are downloaded based off customizable search terms
 - ✅ Search terms can be disabled and grouped for maximum flexibility
