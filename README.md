@@ -19,12 +19,12 @@ A simple application for generating windows wallpapers, with the following featu
 
 [//]: <> (images_start)
 <p align="center">
-    <img src="screenshots/settings.png" alt="start screen" width="600"/><br>
+    <img src="screenshots/settings.png" alt="settings screen" width="600"/><br>
     Settings
 </p>
 
 <p align="center">
-    <img src="screenshots/systemtray.png" alt="start screen" width="300"/><br>
+    <img src="screenshots/systemtray.png" alt="system tray icon" width="300"/><br>
     System tray
 </p>
 
