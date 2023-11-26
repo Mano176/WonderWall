@@ -82,9 +82,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
   }
 
   void newWallpaperFromSearchTerm(String searchTerm) async {
-    if (!searchTerm.toLowerCase().contains("wallpaper")) {
-      searchTerm += " wallpaper";
-    }
     Map<String, String> params = {
       "client_id": clientId,
       "query": searchTerm,
