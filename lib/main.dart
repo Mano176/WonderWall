@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -15,11 +16,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 
+const minSize = Size(1200, 800);
 const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
 late final bool fromAutostart;
 final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.png";
+Timer? scheduledTimer;
 
 void main(args) async {
   args = {
@@ -28,8 +31,8 @@ void main(args) async {
   fromAutostart = bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
 
   WidgetsFlutterBinding.ensureInitialized();
-
-  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/secrets.json"));
+  // TODO change to secrets.json
+  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/my_secrets.json"));
   clientId = secrets["clientId"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -41,10 +44,22 @@ void main(args) async {
 
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow();
+  await windowManager.setMinimumSize(minSize);
+  await windowManager.setSize(minSize);
   await windowManager.setTitle(appTitle);
-  await windowManager.setMinimumSize(const Size(1000, 800));
   await windowManager.center();
   runApp(const MyApp());
+}
+
+void scheduleTask(void Function() callback, DateTime time) {
+  if (scheduledTimer != null) {
+    scheduledTimer!.cancel();
+  }
+  Duration duration = time.difference(DateTime.now());
+  scheduledTimer = Timer(duration, () {
+    scheduledTimer = null;
+    callback();
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -55,8 +70,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WindowListener {
+  bool loading = true;
   Image? currentWallpaper;
-  late List<Group> groups = [];
+  late bool wallpaperOnStart;
+  late bool wallpaperOnInterval;
+  late int intervalHour;
+  late int intervalMinute;
+  late List<Group> groups;
   Map<String, String?> credits = {
     "photographer_name": "Unknown",
     "photographer_url": null,
@@ -109,6 +129,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   void saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool("wallpaperOnStart", wallpaperOnStart);
+    prefs.setBool("wallpaperOnInterval", wallpaperOnInterval);
     prefs.setString("groups", jsonEncode(groups.map((e) => e.toMap()).toList()));
     if (credits["photographer_name"] != null) {
       prefs.setString("photographer_name", credits["photographer_name"]!);
@@ -123,6 +145,10 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   Future<void> loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    wallpaperOnStart = prefs.getBool("wallpaperOnStart") ?? true;
+    wallpaperOnInterval = prefs.getBool("wallpaperOnInterval") ?? true;
+    intervalHour = prefs.getInt("intervalHour") ?? 0;
+    intervalMinute = prefs.getInt("intervalMinute") ?? 0;
     String? groupsString = prefs.getString("groups");
     if (groupsString != null) {
       setGroups(List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList()));
@@ -143,6 +169,51 @@ class _MyAppState extends State<MyApp> with WindowListener {
     }
   }
 
+  void setWallpaperOnStart(bool value) {
+    setState(() {
+      wallpaperOnStart = value;
+    });
+    saveSettings();
+  }
+
+  void setWallpaperOnInterval(bool value) {
+    setState(() {
+      wallpaperOnInterval = value;
+    });
+    saveSettings();
+
+    if (wallpaperOnInterval) {
+      scheduleNextWallpaper(intervalHour, intervalMinute);
+    } else {
+      if (scheduledTimer != null) {
+        scheduledTimer!.cancel();
+      }
+    }
+  }
+
+  void setIntervalTime(int hour, int minute) {
+    setState(() {
+      intervalHour = hour;
+      intervalMinute = minute;
+    });
+    saveSettings();
+    scheduleNextWallpaper(intervalHour, intervalMinute);
+  }
+
+  void scheduleNextWallpaper(int hour, int minute) {
+    DateTime time = DateTime.now();
+    if (time.hour > hour || (time.hour == hour && time.minute >= minute)) {
+      time = time.add(const Duration(days: 1));
+    }
+    time = DateTime(time.year, time.month, time.day, hour, minute);
+    scheduleTask(() {
+      if (wallpaperOnInterval) {
+        newWallpaperFromGroups(groups);
+        scheduleNextWallpaper(hour, minute);
+      }
+    }, time);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -155,11 +226,13 @@ class _MyAppState extends State<MyApp> with WindowListener {
       windowManager.setPreventClose(true);
       await loadSettings();
       initSystemTray();
-      if (fromAutostart) {
+      if (wallpaperOnStart) {
         newWallpaperFromGroups(groups);
-      } else {
+      }
+      if (!fromAutostart) {
         windowManager.show();
       }
+      loading = false;
     }();
   }
 
@@ -218,15 +291,24 @@ class _MyAppState extends State<MyApp> with WindowListener {
     return MaterialApp(
       title: appTitle,
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
-      home: Settings(
-        currentWallpaper: currentWallpaper,
-        credits: credits,
-        groups: groups,
-        setGroups: setGroups,
-        newWallpaperFromGroups: newWallpaperFromGroups,
-        newWallpaperFromGroup: newWallpaperFromGroup,
-        newWallpaperFromSearchTerm: newWallpaperFromSearchTerm,
-      ),
+      home: loading
+          ? const CircularProgressIndicator()
+          : Settings(
+              currentWallpaper: currentWallpaper,
+              credits: credits,
+              groups: groups,
+              wallpaperOnStart: wallpaperOnStart,
+              wallpaperOnInterval: wallpaperOnInterval,
+              intervalHour: intervalHour,
+              intervalMinute: intervalMinute,
+              setGroups: setGroups,
+              newWallpaperFromGroups: newWallpaperFromGroups,
+              newWallpaperFromGroup: newWallpaperFromGroup,
+              newWallpaperFromSearchTerm: newWallpaperFromSearchTerm,
+              setWallpaperOnStart: setWallpaperOnStart,
+              setWallpaperOnInterval: setWallpaperOnInterval,
+              setIntervalTime: setIntervalTime,
+            ),
     );
   }
 

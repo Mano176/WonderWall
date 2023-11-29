@@ -9,20 +9,34 @@ class Settings extends StatelessWidget {
   final Image? currentWallpaper;
   final Map<String, String?> credits;
   final List<Group> groups;
+  final bool wallpaperOnStart;
+  final bool wallpaperOnInterval;
+  final int intervalHour;
+  final int intervalMinute;
   final Function(List<Group> groups) setGroups;
   final Function(List<Group> groups) newWallpaperFromGroups;
   final Function(Group group, [Random? random]) newWallpaperFromGroup;
   final Function(String searchTerm) newWallpaperFromSearchTerm;
+  final Function(bool bool) setWallpaperOnStart;
+  final Function(bool bool) setWallpaperOnInterval;
+  final Function(int hour, int minute) setIntervalTime;
 
   const Settings(
       {super.key,
       required this.currentWallpaper,
       required this.credits,
       required this.groups,
+      required this.wallpaperOnStart,
+      required this.wallpaperOnInterval,
+      required this.intervalHour,
+      required this.intervalMinute,
       required this.setGroups,
       required this.newWallpaperFromGroups,
       required this.newWallpaperFromGroup,
-      required this.newWallpaperFromSearchTerm});
+      required this.newWallpaperFromSearchTerm,
+      required this.setWallpaperOnStart,
+      required this.setWallpaperOnInterval,
+      required this.setIntervalTime});
 
   Widget checkboxListTile({
     required String title,
@@ -253,6 +267,28 @@ class Settings extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const Text("General Settings", style: TextStyle(fontSize: 30)),
+                  CheckboxListTile(
+                      title: const Text("New Wallpaper on app start"),
+                      value: wallpaperOnStart,
+                      onChanged: (checked) => setWallpaperOnStart(checked!)),
+                  CheckboxListTile(
+                      title: const Text("New Wallpaper every 24 hours"),
+                      value: wallpaperOnInterval,
+                      onChanged: (checked) => setWallpaperOnInterval(checked!)),
+                  Center(
+                    child: OutlinedButton(
+                      onPressed: wallpaperOnInterval
+                          ? () => showTimePicker(context: context, initialTime: TimeOfDay(hour: intervalHour, minute: intervalMinute)).then((value) {
+                                if (value != null) {
+                                  setIntervalTime(value.hour, value.minute);
+                                }
+                              })
+                          : null,
+                      child: Text("New Wallpaper at ${intervalHour.toString().padLeft(2, "0")}:${intervalMinute.toString().padLeft(2, "0")}"),
+                    ),
+                  ),
+                  const Divider(),
                   const Text("Current Wallpaper", style: TextStyle(fontSize: 30)),
                   Expanded(
                     child: Column(
