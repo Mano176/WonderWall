@@ -230,7 +230,9 @@ class _MyAppState extends State<MyApp> with WindowListener {
       if (!fromAutostart) {
         windowManager.show();
       }
-      loading = false;
+      setState(() {
+        loading = false;
+      });
     }();
   }
 
@@ -290,7 +292,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
       title: appTitle,
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
       home: loading
-          ? const CircularProgressIndicator()
+          ? const Center(
+              child: SizedBox(
+              width: 100,
+              height: 100,
+              child: CircularProgressIndicator(),
+            ))
           : Settings(
               currentWallpaper: currentWallpaper,
               credits: credits,
