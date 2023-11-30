@@ -151,7 +151,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     intervalMinute = prefs.getInt("intervalMinute") ?? 0;
     String? groupsString = prefs.getString("groups");
     if (groupsString != null) {
-      setGroups(List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList()));
+      groups = List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
     }
     credits = {
       "photographer_name": prefs.getString("photographer_name") ?? "Unknown",
@@ -160,13 +160,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
     };
   }
 
-  void setGroups(List<Group> groups, {bool save = true}) {
+  void setGroups(List<Group> groups) {
     setState(() {
       this.groups = groups;
     });
-    if (save) {
-      saveSettings();
-    }
+    saveSettings();
   }
 
   void setWallpaperOnStart(bool value) {
