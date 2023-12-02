@@ -31,8 +31,7 @@ void main(args) async {
   fromAutostart = bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
 
   WidgetsFlutterBinding.ensureInitialized();
-  // TODO change to secrets.json
-  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/my_secrets.json"));
+  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/secrets.json"));
   clientId = secrets["clientId"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -74,6 +73,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
   Image? currentWallpaper;
   late bool wallpaperOnStart;
   late bool wallpaperOnInterval;
+  Map<String, int>? lastChanged;
   late int intervalHour;
   late int intervalMinute;
   late List<Group> groups;
@@ -125,12 +125,31 @@ class _MyAppState extends State<MyApp> with WindowListener {
     });
     await saveTempFile(imageResponse.bodyBytes, wallpaperPath);
     changeWallpaper(wallpaperPath);
+
+    DateTime time = DateTime.now();
+    lastChanged = {
+      "year": time.year,
+      "month": time.month,
+      "day": time.day,
+      "hour": time.hour,
+      "minute": time.minute,
+    };
+    saveSettings();
   }
 
   void saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool("wallpaperOnStart", wallpaperOnStart);
     prefs.setBool("wallpaperOnInterval", wallpaperOnInterval);
+    prefs.setInt("intervalHour", intervalHour);
+    prefs.setInt("intervalMinute", intervalMinute);
+    if (lastChanged != null) {
+      prefs.setInt("lastChangedYear", lastChanged!["year"]!);
+      prefs.setInt("lastChangedMonth", lastChanged!["month"]!);
+      prefs.setInt("lastChangedDay", lastChanged!["day"]!);
+      prefs.setInt("lastChangedHour", lastChanged!["hour"]!);
+      prefs.setInt("lastChangedMinute", lastChanged!["minute"]!);
+    }
     prefs.setString("groups", jsonEncode(groups.map((e) => e.toMap()).toList()));
     if (credits["photographer_name"] != null) {
       prefs.setString("photographer_name", credits["photographer_name"]!);
@@ -147,6 +166,20 @@ class _MyAppState extends State<MyApp> with WindowListener {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     wallpaperOnStart = prefs.getBool("wallpaperOnStart") ?? true;
     wallpaperOnInterval = prefs.getBool("wallpaperOnInterval") ?? true;
+    int? lastChangedYear = prefs.getInt("lastChangedYear");
+    int? lastChangedMonth = prefs.getInt("lastChangedMonth");
+    int? lastChangedDay = prefs.getInt("lastChangedDay");
+    int? lastChangedHour = prefs.getInt("lastChangedHour");
+    int? lastChangedMinute = prefs.getInt("lastChangedMinute");
+    if ([lastChangedYear, lastChangedMonth, lastChangedDay, lastChangedHour, lastChangedMinute].every((element) => element != null)) {
+      lastChanged = {
+        "year": lastChangedYear!,
+        "month": lastChangedMonth!,
+        "day": lastChangedDay!,
+        "hour": lastChangedHour!,
+        "minute": lastChangedMinute!,
+      };
+    }
     intervalHour = prefs.getInt("intervalHour") ?? 0;
     intervalMinute = prefs.getInt("intervalMinute") ?? 0;
     String? groupsString = prefs.getString("groups");
@@ -224,7 +257,20 @@ class _MyAppState extends State<MyApp> with WindowListener {
       windowManager.setPreventClose(true);
       await loadSettings();
       initSystemTray();
-      if (wallpaperOnStart) {
+      if (wallpaperOnInterval) {
+        scheduleNextWallpaper(intervalHour, intervalMinute);
+      }
+      bool changeBecauseInterval = false;
+      DateTime now = DateTime.now();
+      if (wallpaperOnInterval && lastChanged != null) {
+        DateTime lastChangedTime =
+            DateTime(lastChanged!["year"]!, lastChanged!["month"]!, lastChanged!["day"]!, lastChanged!["hour"]!, lastChanged!["minute"]!);
+        DateTime changeTime = DateTime(now.year, now.month, now.day, intervalHour, intervalMinute);
+        if (changeTime.isAfter(lastChangedTime) && now.isAfter(changeTime)) {
+          changeBecauseInterval = true;
+        }
+      }
+      if (wallpaperOnStart || changeBecauseInterval) {
         newWallpaperFromGroups(groups);
       }
       if (!fromAutostart) {
