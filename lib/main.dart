@@ -15,6 +15,7 @@ import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 const minSize = Size(1200, 800);
 const String appTitle = "WonderWall";
@@ -31,7 +32,7 @@ void main(args) async {
   fromAutostart = bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
 
   WidgetsFlutterBinding.ensureInitialized();
-  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/secrets.json"));
+  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/${kDebugMode ? "debug_secrets.json" : "secrets.json"}"));
   clientId = secrets["clientId"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
