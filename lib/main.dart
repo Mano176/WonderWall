@@ -17,7 +17,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 
-const minSize = Size(1200, 800);
+const minSize = Size(1200, 900);
 const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
 late final String clientId;
@@ -297,6 +297,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     final Menu menu = Menu();
     await menu.buildFrom([
       MenuItemLabel(label: "New Wallpaper", onClicked: (menuItem) => newWallpaperFromGroups(groups)),
+      MenuItemLabel(label: "New Random Wallpaper", onClicked: (menuItem) => newWallpaper()),
       MenuSeparator(),
       MenuItemLabel(label: "Credits:", enabled: false),
       MenuItemLabel(

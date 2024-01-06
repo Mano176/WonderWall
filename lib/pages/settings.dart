@@ -16,7 +16,7 @@ class Settings extends StatelessWidget {
   final Function(List<Group> groups) setGroups;
   final Function(List<Group> groups) newWallpaperFromGroups;
   final Function(Group group, [Random? random]) newWallpaperFromGroup;
-  final Function(String searchTerm) newWallpaper;
+  final Function([String? searchTerm]) newWallpaper;
   final Function(bool bool) setWallpaperOnStart;
   final Function(bool bool) setWallpaperOnInterval;
   final Function(int hour, int minute) setIntervalTime;
@@ -334,6 +334,10 @@ class Settings extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.all(5.0),
                                 child: OutlinedButton(onPressed: () => newWallpaperFromGroups(groups), child: const Text("New Wallpaper")),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: OutlinedButton(onPressed: () => newWallpaper(), child: const Text("New Random Wallpaper")),
                               ),
                             ],
                           ),
