@@ -16,7 +16,7 @@ class Settings extends StatelessWidget {
   final Function(List<Group> groups) setGroups;
   final Function(List<Group> groups) newWallpaperFromGroups;
   final Function(Group group, [Random? random]) newWallpaperFromGroup;
-  final Function(String searchTerm) newWallpaperFromSearchTerm;
+  final Function(String searchTerm) newWallpaper;
   final Function(bool bool) setWallpaperOnStart;
   final Function(bool bool) setWallpaperOnInterval;
   final Function(int hour, int minute) setIntervalTime;
@@ -33,7 +33,7 @@ class Settings extends StatelessWidget {
       required this.setGroups,
       required this.newWallpaperFromGroups,
       required this.newWallpaperFromGroup,
-      required this.newWallpaperFromSearchTerm,
+      required this.newWallpaper,
       required this.setWallpaperOnStart,
       required this.setWallpaperOnInterval,
       required this.setIntervalTime});
@@ -204,7 +204,7 @@ class Settings extends StatelessWidget {
                         setGroups(groups);
                       },
                       onSetAsWallpaper: () {
-                        newWallpaperFromSearchTerm(element.title);
+                        newWallpaper(element.title);
                       },
                     ),
                   Padding(

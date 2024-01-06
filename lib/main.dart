@@ -87,27 +87,29 @@ class _MyAppState extends State<MyApp> with WindowListener {
   void newWallpaperFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
         groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
-    if (groupsToChooseFrom.isEmpty) return;
-
-    Random random = Random();
-    Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
-    newWallpaperFromGroup(group, random);
+    if (groupsToChooseFrom.isEmpty) {
+      newWallpaper();
+    } else {
+      Random random = Random();
+      Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
+      newWallpaperFromGroup(group, random);
+    }
   }
 
   void newWallpaperFromGroup(Group group, [Random? random]) async {
     random ??= Random();
     List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
-    if (searchTermsToChooseFrom.isEmpty) return;
-    String searchTerm = searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title;
-    newWallpaperFromSearchTerm(searchTerm);
+    newWallpaper(searchTermsToChooseFrom.isEmpty ? null : searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title);
   }
 
-  void newWallpaperFromSearchTerm(String searchTerm) async {
+  void newWallpaper([String? searchTerm]) async {
     Map<String, String> params = {
       "client_id": clientId,
-      "query": searchTerm,
       "orientation": "landscape",
     };
+    if (searchTerm != null) {
+      params["query"] = searchTerm;
+    }
     Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
     String url = response["urls"]["raw"];
     setState(() {
@@ -356,7 +358,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
               setGroups: setGroups,
               newWallpaperFromGroups: newWallpaperFromGroups,
               newWallpaperFromGroup: newWallpaperFromGroup,
-              newWallpaperFromSearchTerm: newWallpaperFromSearchTerm,
+              newWallpaper: newWallpaper,
               setWallpaperOnStart: setWallpaperOnStart,
               setWallpaperOnInterval: setWallpaperOnInterval,
               setIntervalTime: setIntervalTime,
