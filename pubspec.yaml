@@ -36,6 +36,11 @@ dependencies:
   url_launcher: ^6.1.14
   launch_at_startup: ^0.2.2
   package_info_plus: ^5.0.0
+  firebase_core: ^2.27.0
+  cloud_firestore: ^4.15.8
+  firebase_auth: ^4.17.8
+  window_to_front: ^0.0.3
+  oauth2: ^2.0.1
 
 dev_dependencies:
   flutter_test:

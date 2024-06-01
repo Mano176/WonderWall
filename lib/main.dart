@@ -7,8 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:wonderwall/auth_manager.dart';
 import 'package:wonderwall/data.dart';
-import 'package:wonderwall/pages/settings.dart';
+import 'package:wonderwall/pages/settings.dart' as settings_page;
 import 'package:wonderwall/util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_tray/system_tray.dart';
@@ -16,6 +17,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
+
 
 const minSize = Size(1200, 900);
 const String appTitle = "WonderWall";
@@ -70,6 +76,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WindowListener {
+  User? user;
   bool loading = true;
   Image? currentWallpaper;
   late bool wallpaperOnStart;
@@ -167,6 +174,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   Future<void> loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    AuthManager.accessToken = prefs.getString("google_accesstoken");
     wallpaperOnStart = prefs.getBool("wallpaperOnStart") ?? true;
     wallpaperOnInterval = prefs.getBool("wallpaperOnInterval") ?? true;
     int? lastChangedYear = prefs.getInt("lastChangedYear");
@@ -256,6 +264,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
       currentWallpaper = Image.file(file);
     }
     () async {
+      await initializeFirebase();
+
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
       await loadSettings();
@@ -336,6 +346,54 @@ class _MyAppState extends State<MyApp> with WindowListener {
     });
   }
 
+  Future<void> initializeFirebase() async {
+    // Firebase Start
+
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Auth Start
+    FirebaseAuth.instance
+    .authStateChanges()
+    .listen((User? user) async {
+      setState(() {
+        this.user = user;
+      });
+      if (user == null) {
+        print('User is currently signed out!');
+      } else {
+        print('User is signed in!');
+        print(user);
+
+        // Firestore Start
+        // FirebaseFirestore db = FirebaseFirestore.instance;
+
+        // final dbuser = <String, dynamic>{
+        //   "first": "Ada",
+        //   "last": "Lovelace",
+        //   "born": 1815
+        // };
+
+        // // Add a new document with a generated ID
+        // db.collection("users").add(dbuser).then((DocumentReference doc) => {
+        //   print('DocumentSnapshot added with ID: ${doc.id}')
+        // });
+
+        // await db.collection("users").get().then((event) {
+        //   for (var doc in event.docs) {
+        //     print("${doc.id} => ${doc.data()}");
+        //   }
+        // });
+        //Firestore End
+      }
+    });
+    // Auth End
+
+
+    // Firebase End
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -348,7 +406,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
               height: 100,
               child: CircularProgressIndicator(),
             ))
-          : Settings(
+          : settings_page.Settings(
+              user: user,
               currentWallpaper: currentWallpaper,
               credits: credits,
               groups: groups,

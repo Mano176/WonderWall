@@ -1,11 +1,14 @@
 import 'dart:math';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wonderwall/auth_manager.dart';
 import 'package:wonderwall/data.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends StatefulWidget {
+  final User? user;
   final Image? currentWallpaper;
   final Map<String, String?> credits;
   final List<Group> groups;
@@ -23,6 +26,7 @@ class Settings extends StatelessWidget {
 
   const Settings(
       {super.key,
+      required this.user,
       required this.currentWallpaper,
       required this.credits,
       required this.groups,
@@ -37,6 +41,13 @@ class Settings extends StatelessWidget {
       required this.setWallpaperOnStart,
       required this.setWallpaperOnInterval,
       required this.setIntervalTime});
+
+  @override
+  State<Settings> createState() => _SettingsState();
+}
+
+class _SettingsState extends State<Settings> {
+  bool isProfilePopupOpen = false;
 
   Widget checkboxListTile({
     required String title,
@@ -123,7 +134,7 @@ class Settings extends StatelessWidget {
                 child: IconButton(
                     onPressed: () {
                       group.open = !group.open;
-                      setGroups(groups);
+                      setGroups(widget.groups);
                     },
                     icon: const Icon(Icons.arrow_drop_down)),
               ),
@@ -137,27 +148,27 @@ class Settings extends StatelessWidget {
                 isEditing: group.isEditing,
                 onSelected: (value) {
                   group.enabled = value!;
-                  setGroups(groups);
+                  setGroups(widget.groups);
                 },
                 onHover: (value) {
-                  if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
+                  if (widget.groups.any((e) => e.isEditing) || widget.groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
                   group.isHovering = value ?? false;
-                  setGroups(groups);
+                  setGroups(widget.groups);
                 },
                 onEdit: () {
                   group.isEditing = !group.isEditing;
-                  setGroups(groups);
+                  setGroups(widget.groups);
                 },
                 onDelete: () {
-                  groups.remove(group);
-                  setGroups(groups);
+                  widget.groups.remove(group);
+                  setGroups(widget.groups);
                 },
                 setTitle: (value) {
                   group.title = value;
-                  setGroups(groups);
+                  setGroups(widget.groups);
                 },
                 onSetAsWallpaper: () {
-                  newWallpaperFromGroup(group);
+                  widget.newWallpaperFromGroup(group);
                 },
               ),
             ),
@@ -183,28 +194,28 @@ class Settings extends StatelessWidget {
                       onSelected: group.enabled
                           ? (value) {
                               element.enabled = value!;
-                              setGroups(groups);
+                              setGroups(widget.groups);
                             }
                           : null,
                       onHover: (value) {
-                        if (groups.any((e) => e.isEditing) || groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
+                        if (widget.groups.any((e) => e.isEditing) || widget.groups.any((e) => e.searchTerms.any((e) => e.isEditing))) return;
                         element.isHovering = value ?? false;
-                        setGroups(groups);
+                        setGroups(widget.groups);
                       },
                       onEdit: () {
                         element.isEditing = !element.isEditing;
-                        setGroups(groups);
+                        setGroups(widget.groups);
                       },
                       onDelete: () {
                         group.searchTerms.remove(element);
-                        setGroups(groups);
+                        setGroups(widget.groups);
                       },
                       setTitle: (value) {
                         element.title = value;
-                        setGroups(groups);
+                        setGroups(widget.groups);
                       },
                       onSetAsWallpaper: () {
-                        newWallpaper(element.title);
+                        widget.newWallpaper(element.title);
                       },
                     ),
                   Padding(
@@ -214,7 +225,7 @@ class Settings extends StatelessWidget {
                         GroupElement element = GroupElement("New Search Term", true);
                         element.isEditing = true;
                         group.searchTerms.add(element);
-                        setGroups(groups);
+                        setGroups(widget.groups);
                       },
                       child: const Text("Add Search Term"),
                     ),
@@ -234,118 +245,191 @@ class Settings extends StatelessWidget {
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text("Search Terms", style: TextStyle(fontSize: 30)),
-                  for (Group group in groups)
-                    buildGroup(
-                      group: group,
-                      setGroups: setGroups,
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Group group = Group("New Group", true, true, []);
-                        group.isEditing = true;
-                        groups.add(group);
-                        setGroups(groups);
-                      },
-                      child: const Text("Add Group"),
-                    ),
-                  )
-                ]),
-              ),
-            ),
-            const VerticalDivider(),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text("General Settings", style: TextStyle(fontSize: 30)),
-                  CheckboxListTile(
-                      title: const Text("New Wallpaper on app start"),
-                      value: wallpaperOnStart,
-                      onChanged: (checked) => setWallpaperOnStart(checked!)),
-                  CheckboxListTile(
-                      title: const Text("New Wallpaper every 24 hours"),
-                      value: wallpaperOnInterval,
-                      onChanged: (checked) => setWallpaperOnInterval(checked!)),
-                  Center(
-                    child: OutlinedButton(
-                      onPressed: wallpaperOnInterval
-                          ? () => showTimePicker(context: context, initialTime: TimeOfDay(hour: intervalHour, minute: intervalMinute)).then((value) {
-                                if (value != null) {
-                                  setIntervalTime(value.hour, value.minute);
-                                }
-                              })
-                          : null,
-                      child: Text("New Wallpaper at ${intervalHour.toString().padLeft(2, "0")}:${intervalMinute.toString().padLeft(2, "0")}"),
-                    ),
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text("Search Terms", style: TextStyle(fontSize: 30)),
+                      for (Group group in widget.groups)
+                        buildGroup(
+                          group: group,
+                          setGroups: widget.setGroups,
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Group group = Group("New Group", true, []);
+                            group.isEditing = true;
+                            widget.groups.add(group);
+                            widget.setGroups(widget.groups);
+                          },
+                          child: const Text("Add Group"),
+                        ),
+                      )
+                    ]),
                   ),
-                  const Divider(),
-                  const Text("Current Wallpaper", style: TextStyle(fontSize: 30)),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 640,
-                          height: 640 / 1920 * 1080,
-                          child: Container(
-                            color: Colors.black,
-                            child: Center(
-                              child: () {
-                                return currentWallpaper == null
-                                    ? const Text("No Wallpaper Selected", style: TextStyle(color: Colors.white))
-                                    : currentWallpaper!;
-                              }(),
+                ),
+                const VerticalDivider(),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text("General Settings", style: TextStyle(fontSize: 30)),
+                      CheckboxListTile(
+                          title: const Text("New Wallpaper on app start"),
+                          value: widget.wallpaperOnStart,
+                          onChanged: (checked) => widget.setWallpaperOnStart(checked!)),
+                      CheckboxListTile(
+                          title: const Text("New Wallpaper every 24 hours"),
+                          value: widget.wallpaperOnInterval,
+                          onChanged: (checked) => widget.setWallpaperOnInterval(checked!)),
+                      Center(
+                        child: OutlinedButton(
+                          onPressed: widget.wallpaperOnInterval
+                              ? () => showTimePicker(context: context, initialTime: TimeOfDay(hour: widget.intervalHour, minute: widget.intervalMinute)).then((value) {
+                                    if (value != null) {
+                                      widget.setIntervalTime(value.hour, value.minute);
+                                    }
+                                  })
+                              : null,
+                          child: Text("New Wallpaper at ${widget.intervalHour.toString().padLeft(2, "0")}:${widget.intervalMinute.toString().padLeft(2, "0")}"),
+                        ),
+                      ),
+                      const Divider(),
+                      const Text("Current Wallpaper", style: TextStyle(fontSize: 30)),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 640,
+                              height: 640 / 1920 * 1080,
+                              child: Container(
+                                color: Colors.black,
+                                child: Center(
+                                  child: () {
+                                    return widget.currentWallpaper == null
+                                        ? const Text("No Wallpaper Selected", style: TextStyle(color: Colors.white))
+                                        : widget.currentWallpaper!;
+                                  }(),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 400,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: OutlinedButton(
+                                      onPressed: widget.credits["shareURL"] == null ? null : () => launchUrl(Uri.parse(widget.credits["shareURL"]!)),
+                                      child: const Text("Open image on Unsplash"),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: OutlinedButton(
+                                      onPressed: widget.credits["photographer_url"] == null ? null : () => launchUrl(Uri.parse(widget.credits["photographer_url"]!)),
+                                      child: Text("Photographer:\n${widget.credits["photographer_name"]}", textAlign: TextAlign.center),
+                                    ),
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 18.0),
+                                    child: Divider(),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: OutlinedButton(onPressed: () => widget.newWallpaperFromGroups(widget.groups), child: const Text("New Wallpaper")),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: OutlinedButton(onPressed: () => widget.newWallpaper(), child: const Text("New Random Wallpaper")),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: () {
+                      const Icon notLoggedInIcon = Icon(Icons.account_circle, size: 30,);
+                      if (widget.user == null) {
+                        return notLoggedInIcon;
+                      }
+
+                      for (UserInfo userInfo in widget.user!.providerData) {
+                        if (userInfo.photoURL != null && userInfo.photoURL != "") {
+                          return Image.network(userInfo.photoURL!, width: 30, height: 30);
+                        }
+                      }
+                      return notLoggedInIcon;
+                    }(),
+                  onPressed: () {
+                    setState(() {
+                      isProfilePopupOpen = !isProfilePopupOpen;
+                    });
+                  },),
+                  Visibility(
+                    visible: isProfilePopupOpen,
+                    child: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        borderRadius: const BorderRadius.all(Radius.circular(12)),
+                        color: Theme.of(context).colorScheme.background,
+                      ),
+                      child: Column(
+                        
+                        children: [
+                          Visibility(
+                            visible: widget.user != null,
+                            child: Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Text(
+                                () {
+                                  if (widget.user != null) {
+                                    for (UserInfo userInfo in widget.user!.providerData) {
+                                      if (userInfo.displayName != null && userInfo.displayName != "") {
+                                        return "Logged in as\n${userInfo.displayName!}";
+                                      }
+                                    }
+                                  }
+                                  return "";
+                                }(),
+                              textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 400,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(
-                                  onPressed: credits["shareURL"] == null ? null : () => launchUrl(Uri.parse(credits["shareURL"]!)),
-                                  child: const Text("Open image on Unsplash"),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(
-                                  onPressed: credits["photographer_url"] == null ? null : () => launchUrl(Uri.parse(credits["photographer_url"]!)),
-                                  child: Text("Photographer:\n${credits["photographer_name"]}", textAlign: TextAlign.center),
-                                ),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 18.0),
-                                child: Divider(),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(onPressed: () => newWallpaperFromGroups(groups), child: const Text("New Wallpaper")),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: OutlinedButton(onPressed: () => newWallpaper(), child: const Text("New Random Wallpaper")),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                          Padding(
+                            padding: const EdgeInsets.all(5.0),
+                            child: OutlinedButton(
+                              onPressed: widget.user == null? AuthManager.signIn : AuthManager.signOut, 
+                              child: Text(widget.user == null? "Login" : "Logout"),
+                            ),
+                          )
+                        ],
+                      ),
+                    )
+                  )
+                ], 
               ),
             ),
           ],
