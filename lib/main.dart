@@ -204,11 +204,13 @@ class _MyAppState extends State<MyApp> with WindowListener {
     };
   }
 
-  void setGroups(List<Group> groups) {
+  void setGroups(List<Group> groups, [bool save = true]) {
     setState(() {
       this.groups = groups;
     });
-    saveSettings();
+    if (save) {
+      saveSettings();
+    }
   }
 
   void setWallpaperOnStart(bool value) {
