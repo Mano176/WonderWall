@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wonderwall/auth_manager.dart';
 import 'package:wonderwall/data.dart';
+import 'package:wonderwall/main.dart';
 
 class Settings extends StatefulWidget {
   final User? user;
@@ -432,7 +433,7 @@ class _SettingsState extends State<Settings> {
                           Padding(
                             padding: const EdgeInsets.all(5.0),
                             child: OutlinedButton(
-                              onPressed: widget.user == null? AuthManager.signIn : AuthManager.signOut, 
+                              onPressed: widget.user == null? () => AuthManager.signIn(googleClientId, googleClientSecret) : AuthManager.signOut, 
                               child: Text(widget.user == null? "Login" : "Logout"),
                             ),
                           )

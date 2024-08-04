@@ -26,7 +26,9 @@ import 'firebase_options.dart';
 const minSize = Size(1200, 900);
 const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
-late final String clientId;
+late final String unsplashClientId;
+late final String googleClientId;
+late final String googleClientSecret;
 late final bool fromAutostart;
 final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.png";
 Timer? scheduledTimer;
@@ -39,7 +41,9 @@ void main(args) async {
 
   WidgetsFlutterBinding.ensureInitialized();
   Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/${kDebugMode ? "debug_secrets.json" : "secrets.json"}"));
-  clientId = secrets["clientId"]!;
+  unsplashClientId = secrets["unsplashClientId"]!;
+  googleClientId = secrets["googleClientId"]!;
+  googleClientSecret = secrets["googleClientSecret"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   launchAtStartup.setup(
@@ -111,7 +115,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   void newWallpaper([String? searchTerm]) async {
     Map<String, String> params = {
-      "client_id": clientId,
+      "client_id": unsplashClientId,
       "orientation": "landscape",
     };
     if (searchTerm != null) {
@@ -160,7 +164,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
       prefs.setInt("lastChangedHour", lastChanged!["hour"]!);
       prefs.setInt("lastChangedMinute", lastChanged!["minute"]!);
     }
-    prefs.setString("groups", jsonEncode(groups.map((e) => e.toMap()).toList()));
+    var groupsMap = groups.map((e) => e.toMap()).toList();
+    var spaces = ' ' * 4;
+    var encoder = JsonEncoder.withIndent(spaces);
+    print("SETTINGS:");
+    print(encoder.convert(groupsMap));
+    prefs.setString("groups", jsonEncode(groupsMap));
     if (credits["photographer_name"] != null) {
       prefs.setString("photographer_name", credits["photographer_name"]!);
     }

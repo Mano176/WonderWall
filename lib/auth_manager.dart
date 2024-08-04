@@ -12,20 +12,18 @@ const String redirectURL = "http://localhost:";
 const String googleAuthApi = "https://accounts.google.com/o/oauth2/v2/auth";
 const String googleTokenApi = "https://oauth2.googleapis.com/token";
 const String revokeTokenUrl = 'https://oauth2.googleapis.com/revoke';
-const String googleClientId = "49000036332-3ufd0p8pk3do7spmgl9mfbir8rn0jo24.apps.googleusercontent.com";
-const String authClientSecret = "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";
 
 class AuthManager {
   static String? accessToken;
   static HttpServer? redirectServer;
 
-  static Future<oauth2.Client> _getOauthClient(Uri redirectUrl) async {
+  static Future<oauth2.Client> _getOauthClient(Uri redirectUrl, String googleClientId, String googleClientSecret) async {
     oauth2.AuthorizationCodeGrant grant = oauth2.AuthorizationCodeGrant(
       googleClientId,
       Uri.parse(googleAuthApi),
       Uri.parse(googleTokenApi),
       httpClient: JsonAcceptingHttpClient(), 
-      secret: authClientSecret
+      secret: googleClientSecret
     );
 
     var authorizationUrl = grant.getAuthorizationUrl(redirectUrl, scopes: ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"]);
@@ -59,12 +57,12 @@ class AuthManager {
     return params;
   }
 
-  static Future<User?> signIn() async {
+  static Future<User?> signIn(String googleClientId, String googleClientSecret) async {
     await redirectServer?.close();
     redirectServer = await HttpServer.bind('localhost', 0);
     final redirectUrl = redirectURL + redirectServer!.port.toString();
 
-    oauth2.Client authenticatedHttpClient = await _getOauthClient(Uri.parse(redirectUrl));
+    oauth2.Client authenticatedHttpClient = await _getOauthClient(Uri.parse(redirectUrl), googleClientId, googleClientSecret);
     Credentials credentials = authenticatedHttpClient.credentials;
     accessToken = credentials.accessToken;
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -77,7 +75,6 @@ class AuthManager {
 
     try {
       UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(authCredential);
-      // displayname und photourl ist in main.dart in user.providerdata
       return userCredential.user;
     } on FirebaseAuthException catch (error) {
       throw Exception('Could not authenticate: $error');
