@@ -135,7 +135,7 @@ class _SettingsState extends State<Settings> {
                 child: IconButton(
                     onPressed: () {
                       group.open = !group.open;
-                      setGroups(widget.groups);
+                      setGroups(widget.groups, false);
                     },
                     icon: const Icon(Icons.arrow_drop_down)),
               ),
