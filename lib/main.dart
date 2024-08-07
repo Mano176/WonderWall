@@ -164,12 +164,22 @@ class _MyAppState extends State<MyApp> with WindowListener {
       prefs.setInt("lastChangedHour", lastChanged!["hour"]!);
       prefs.setInt("lastChangedMinute", lastChanged!["minute"]!);
     }
-    var groupsMap = groups.map((e) => e.toMap()).toList();
-    var spaces = ' ' * 4;
-    var encoder = JsonEncoder.withIndent(spaces);
-    print("SETTINGS:");
-    print(encoder.convert(groupsMap));
-    prefs.setString("groups", jsonEncode(groupsMap));
+    List<Map<String, dynamic>> groupMapList = groups.map((e) => e.toMap()).toList();
+
+    if (AuthManager.accessToken != null) {
+        FirebaseFirestore db = FirebaseFirestore.instance;
+
+        QuerySnapshot<Map<String, dynamic>> querySnapshot = await db.collection(user!.uid).get();
+        for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+          doc.reference.delete();
+        }
+
+        for (Map<String, dynamic> groupMap in groupMapList) {
+          db.collection(user!.uid).add(groupMap);
+        }
+    }
+
+    prefs.setString("groups", jsonEncode(groupMapList));
     if (credits["photographer_name"] != null) {
       prefs.setString("photographer_name", credits["photographer_name"]!);
     }
@@ -203,9 +213,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     intervalHour = prefs.getInt("intervalHour") ?? 0;
     intervalMinute = prefs.getInt("intervalMinute") ?? 0;
     String? groupsString = prefs.getString("groups");
-    if (groupsString != null) {
-      groups = List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
-    }
+    groups = groupsString == null? List.empty(growable: true) : List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
     credits = {
       "photographer_name": prefs.getString("photographer_name") ?? "Unknown",
       "photographer_url": prefs.getString("photographer_url"),
@@ -275,11 +283,10 @@ class _MyAppState extends State<MyApp> with WindowListener {
       currentWallpaper = Image.file(file);
     }
     () async {
-      await initializeFirebase();
-
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
       await loadSettings();
+      await initializeFirebase();
       initSystemTray();
       if (wallpaperOnInterval) {
         scheduleNextWallpaper(intervalHour, intervalMinute);
@@ -358,51 +365,57 @@ class _MyAppState extends State<MyApp> with WindowListener {
   }
 
   Future<void> initializeFirebase() async {
-    // Firebase Start
-
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Auth Start
     FirebaseAuth.instance
     .authStateChanges()
     .listen((User? user) async {
       setState(() {
         this.user = user;
       });
-      if (user == null) {
-        print('User is currently signed out!');
-      } else {
-        print('User is signed in!');
-        print(user);
-
-        // Firestore Start
-        // FirebaseFirestore db = FirebaseFirestore.instance;
-
-        // final dbuser = <String, dynamic>{
-        //   "first": "Ada",
-        //   "last": "Lovelace",
-        //   "born": 1815
-        // };
-
-        // // Add a new document with a generated ID
-        // db.collection("users").add(dbuser).then((DocumentReference doc) => {
-        //   print('DocumentSnapshot added with ID: ${doc.id}')
-        // });
-
-        // await db.collection("users").get().then((event) {
-        //   for (var doc in event.docs) {
-        //     print("${doc.id} => ${doc.data()}");
-        //   }
-        // });
-        //Firestore End
+      if (user != null) {
+        mergeCloudGroupsWithLocalGroups();
       }
     });
-    // Auth End
+  }
 
+  void mergeCloudGroupsWithLocalGroups() async {
+    List<Group> mergedGroups = List.empty(growable: true);
+    List<Group> cloudGroups = (await FirebaseFirestore.instance.collection(user!.uid).get()).docs.map((doc) => Group.fromMap(doc.data())).toList();
+    List<String> titles = cloudGroups.map((group) => group.title).toList();
+    for (String title in groups.map((group) => group.title)) {
+      if (!titles.contains(title)) {
+        titles.add(title);
+      }
+    }
 
-    // Firebase End
+    for (String title in titles) {
+      Group? cloudGroup = cloudGroups.where((group) => group.title == title).firstOrNull;
+      Group? localGroup = groups.where((group) => group.title == title).firstOrNull;
+
+      Group groupDataSource = (cloudGroup != null && (localGroup == null || cloudGroup.editDate.isAfter(localGroup.editDate))? cloudGroup : localGroup)!;
+      
+      List<GroupElement> mergedSearchTerms = List.empty(growable: true);
+      List<String> searchTerms = cloudGroup == null? List.empty(growable: true) : cloudGroup.searchTerms.map((e) => e.title).toList();
+      for (String searchTerm in localGroup == null? List.empty() : localGroup.searchTerms.map((e) => e.title)) {
+        if (!searchTerms.contains(searchTerm)) {
+          searchTerms.add(searchTerm);
+        }
+      }
+
+      for (String searchTerm in searchTerms) {      
+        GroupElement? cloudSearchTerm = cloudGroup?.searchTerms.where((element) => element.title == searchTerm).firstOrNull;
+        GroupElement? localSearchTerm = localGroup?.searchTerms.where((element) => element.title == searchTerm).firstOrNull;
+
+        GroupElement searchTermDataSource = (cloudSearchTerm != null && (localSearchTerm == null || cloudSearchTerm.editDate.isAfter(localSearchTerm.editDate))? cloudSearchTerm : localSearchTerm)!;
+        mergedSearchTerms.add(searchTermDataSource);
+      }
+      groupDataSource.searchTerms = mergedSearchTerms;
+      mergedGroups.add(groupDataSource);
+    }
+    setGroups(mergedGroups);
   }
 
   @override

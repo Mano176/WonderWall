@@ -2,7 +2,7 @@ class Group extends GroupElement {
   bool open;
   List<GroupElement> searchTerms;
 
-  Group(super.title, super.creationDate, super.deletionDate, super.enabled, this.open, this.searchTerms);
+  Group(super.title, super.editDate, super.deleted, super.enabled, this.open, this.searchTerms);
 
   @override
   Map<String, dynamic> toMap() {
@@ -14,10 +14,10 @@ class Group extends GroupElement {
 
   static Group fromMap(Map<String, dynamic> map) {
     return Group(
-      map["title"],
-      map["creationDate"] == null? DateTime.now() : DateTime.parse(map["creationDate"]),
-      map["deletionDate"] == null || map["deletionDate"] == "null"? null : DateTime.parse(map["deletionDate"]),
-      map["enabled"],
+      map["title"] ?? "",
+      map["editDate"] == null? DateTime.now() : DateTime.parse(map["editDate"]),
+      map["deleted"] ?? false,
+      map["enabled"] ?? true,
       true,
       List<GroupElement>.from(map["searchTerms"].map((e) => GroupElement.fromMap(e)).toList())
     );
@@ -26,28 +26,29 @@ class Group extends GroupElement {
 
 class GroupElement {
   String title;
-  DateTime creationDate;
-  DateTime? deletionDate;
+  DateTime editDate;
+  bool deleted;
   bool enabled;
   bool isHovering = false;
   bool isEditing = false;
 
-  GroupElement(this.title, this.creationDate, this.deletionDate, this.enabled);
+  GroupElement(this.title, this.editDate, this.deleted, this.enabled);
 
   Map<String, dynamic> toMap() {
     return {
       "title": title,
-      "creationDate": creationDate.toString(),
-      "deletionDate": deletionDate.toString(),
+      "editDate": editDate.toString(),
+      "deleted": deleted,
       "enabled": enabled,
     };
   }
 
   static GroupElement fromMap(Map<String, dynamic> map) {
     return GroupElement(
-      map["title"],
-      map["creationDate"] == null? DateTime.now() : DateTime.parse(map["creationDate"]),
-      map["deletionDate"] == null || map["deletionDate"] == "null"? null : DateTime.parse(map["deletionDate"]),
-      map["enabled"]);
+      map["title"] ?? "",
+      map["editDate"] == null? DateTime.now() : DateTime.parse(map["editDate"]),
+      map["deleted"]?? false,
+      map["enabled"] ?? true
+    );
   }
 }

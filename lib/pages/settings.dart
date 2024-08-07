@@ -149,6 +149,7 @@ class _SettingsState extends State<Settings> {
                 isEditing: group.isEditing,
                 onSelected: (value) {
                   group.enabled = value!;
+                  group.editDate = DateTime.now();
                   setGroups(widget.groups);
                 },
                 onHover: (value) {
@@ -162,13 +163,20 @@ class _SettingsState extends State<Settings> {
                 },
                 onDelete: () {
                   DateTime deletionDateTime = DateTime.now();
-                  group.deletionDate = deletionDateTime;
+                  group.deleted = true;
+                  group.editDate = deletionDateTime;
                   for (GroupElement element in group.searchTerms) {
-                    element.deletionDate = deletionDateTime;
+                    element.deleted = true;
+                    element.editDate = deletionDateTime;
                   }
                   setGroups(widget.groups);
                 },
                 setTitle: (value) {
+                  DateTime renameDateTime = DateTime.now();
+                  List<GroupElement> oldSearchTerms = group.searchTerms.map((searchTerm) => GroupElement(searchTerm.title, renameDateTime, true, searchTerm.enabled)).toList();
+                  Group oldGroup = Group(group.title, renameDateTime, true, group.enabled, group.open, oldSearchTerms);
+                  int index = widget.groups.indexOf(group);
+                  widget.groups.insert(index, oldGroup);
                   Group? groupWithSameTitle = widget.groups.where((group) => group.title == value).firstOrNull;
                   if (groupWithSameTitle != null) {
                     widget.groups.remove(groupWithSameTitle);
@@ -195,7 +203,7 @@ class _SettingsState extends State<Settings> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (GroupElement element in group.searchTerms.where((element) => element.deletionDate == null))
+                  for (GroupElement element in group.searchTerms.where((element) => !element.deleted))
                     checkboxListTile(
                       title: element.title,
                       titleSize: 15,
@@ -205,6 +213,9 @@ class _SettingsState extends State<Settings> {
                       onSelected: group.enabled
                           ? (value) {
                               element.enabled = value!;
+                              DateTime editDate = DateTime.now();
+                              element.editDate = editDate;
+                              group.editDate = editDate;
                               setGroups(widget.groups);
                             }
                           : null,
@@ -218,12 +229,18 @@ class _SettingsState extends State<Settings> {
                         setGroups(widget.groups);
                       },
                       onDelete: () {
-                        element.deletionDate = DateTime.now();
+                        element.deleted = true;
+                        element.editDate = DateTime.now();
                         setGroups(widget.groups);
                       },
                       setTitle: (value) {
+                        DateTime renameDateTime = DateTime.now();
+                        GroupElement oldSearchTerm = GroupElement(element.title, renameDateTime, true, element.enabled);
+                        int index = group.searchTerms.indexOf(element);
+                        group.searchTerms.insert(index, oldSearchTerm);
                         group.searchTerms.removeWhere((element) => element.title == value);
                         element.title = value;
+                        element.editDate = renameDateTime;
                         setGroups(widget.groups);
                       },
                       onSetAsWallpaper: () {
@@ -234,7 +251,7 @@ class _SettingsState extends State<Settings> {
                     padding: const EdgeInsets.all(8.0),
                     child: OutlinedButton(
                       onPressed: () {
-                        GroupElement element = GroupElement("New Search Term", DateTime.now(), null, true);
+                        GroupElement element = GroupElement("New Search Term", DateTime.now(), false, true);
                         element.isEditing = true;
                         group.searchTerms.add(element);
                         setGroups(widget.groups);
@@ -267,7 +284,7 @@ class _SettingsState extends State<Settings> {
                   child: SingleChildScrollView(
                     child: Column(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.start, children: [
                       const Text("Search Terms", style: TextStyle(fontSize: 30)),
-                      for (Group group in widget.groups.where((group) => group.deletionDate == null))
+                      for (Group group in widget.groups.where((group) => !group.deleted))
                         buildGroup(
                           group: group,
                           setGroups: widget.setGroups,
@@ -276,7 +293,7 @@ class _SettingsState extends State<Settings> {
                         padding: const EdgeInsets.fromLTRB(50, 8, 8, 8),
                         child: OutlinedButton(
                           onPressed: () {
-                            Group group = Group("New Group", DateTime.now(), null, true, true, []);
+                            Group group = Group("New Group", DateTime.now(), false, true, true, []);
                             group.isEditing = true;
                             widget.groups.add(group);
                             widget.setGroups(widget.groups);
