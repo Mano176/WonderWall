@@ -12,15 +12,17 @@ class Settings extends StatefulWidget {
   final User? user;
   final Image? currentWallpaper;
   final Map<String, String?> credits;
+  final Map<String, bool> allowedOrientations;
   final List<Group> groups;
   final bool wallpaperOnStart;
   final bool wallpaperOnInterval;
   final int intervalHour;
   final int intervalMinute;
+  final Function(Map<String, bool>) setAllowedOrientations;
   final Function(List<Group> groups, [bool save]) setGroups;
   final Function(List<Group> groups) newWallpaperFromGroups;
   final Function(Group group, [Random? random]) newWallpaperFromGroup;
-  final Function([String? searchTerm]) newWallpaper;
+  final Function(List<String> allowedOrientations, [String? searchTerm, Random? random]) newWallpaper;
   final Function(bool bool) setWallpaperOnStart;
   final Function(bool bool) setWallpaperOnInterval;
   final Function(int hour, int minute) setIntervalTime;
@@ -30,11 +32,13 @@ class Settings extends StatefulWidget {
       required this.user,
       required this.currentWallpaper,
       required this.credits,
+      required this.allowedOrientations,
       required this.groups,
       required this.wallpaperOnStart,
       required this.wallpaperOnInterval,
       required this.intervalHour,
       required this.intervalMinute,
+      required this.setAllowedOrientations,
       required this.setGroups,
       required this.newWallpaperFromGroups,
       required this.newWallpaperFromGroup,
@@ -244,7 +248,7 @@ class _SettingsState extends State<Settings> {
                         setGroups(widget.groups);
                       },
                       onSetAsWallpaper: () {
-                        widget.newWallpaper(element.title);
+                        widget.newWallpaper(widget.allowedOrientations.keys.where((orientation) => widget.allowedOrientations[orientation]!).toList(), element.title, null);
                       },
                     ),
                   Padding(
@@ -330,6 +334,20 @@ class _SettingsState extends State<Settings> {
                           child: Text("New Wallpaper at ${widget.intervalHour.toString().padLeft(2, "0")}:${widget.intervalMinute.toString().padLeft(2, "0")}"),
                         ),
                       ),
+                      const Text("Allowed orientations", style: TextStyle(fontSize: 20)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: widget.allowedOrientations.keys.map((orientation) =>
+                          Row(
+                            children: [
+                              Checkbox(value: widget.allowedOrientations[orientation], onChanged: widget.allowedOrientations[orientation]! && widget.allowedOrientations.values.where((value) => value).length == 1 ? null : (checked) {
+                                widget.allowedOrientations[orientation] = checked!;
+                                widget.setAllowedOrientations(widget.allowedOrientations);
+                              }),
+                              Text(orientation.substring(0, 1).toUpperCase()+orientation.substring(1))
+                            ],
+                          )).toList(),
+                      ),
                       const Divider(),
                       const Text("Current Wallpaper", style: TextStyle(fontSize: 30)),
                       Expanded(
@@ -379,7 +397,7 @@ class _SettingsState extends State<Settings> {
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(5.0),
-                                    child: OutlinedButton(onPressed: () => widget.newWallpaper(), child: const Text("New Random Wallpaper")),
+                                    child: OutlinedButton(onPressed: () => widget.newWallpaper(widget.allowedOrientations.keys.where((orientation) => widget.allowedOrientations[orientation]!).toList()), child: const Text("New Random Wallpaper")),
                                   ),
                                 ],
                               ),

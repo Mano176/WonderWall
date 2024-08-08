@@ -16,7 +16,7 @@ import 'package:system_tray/system_tray.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show compute, kDebugMode;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,7 +30,7 @@ late final String unsplashClientId;
 late final String googleClientId;
 late final String googleClientSecret;
 late final bool fromAutostart;
-final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.png";
+final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.jpg";
 Timer? scheduledTimer;
 
 void main(args) async {
@@ -80,6 +80,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WindowListener {
+  final messengerKey = GlobalKey<ScaffoldMessengerState>();
   User? user;
   bool loading = true;
   Image? currentWallpaper;
@@ -94,14 +95,19 @@ class _MyAppState extends State<MyApp> with WindowListener {
     "photographer_url": null,
     "shareURL": null,
   };
+  Map<String, bool> allowedOrientations = {
+    "landscape": true,
+    "squarish": true,
+    "portrait": true
+  };
 
   void newWallpaperFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
         groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
+    Random random = Random();
     if (groupsToChooseFrom.isEmpty) {
-      newWallpaper();
+      newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), null, random);
     } else {
-      Random random = Random();
       Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
       newWallpaperFromGroup(group, random);
     }
@@ -110,34 +116,51 @@ class _MyAppState extends State<MyApp> with WindowListener {
   void newWallpaperFromGroup(Group group, [Random? random]) async {
     random ??= Random();
     List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
-    newWallpaper(searchTermsToChooseFrom.isEmpty ? null : searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title);
+    newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), searchTermsToChooseFrom.isEmpty ? null : searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title, random);
   }
 
-  void newWallpaper([String? searchTerm]) async {
+  void newWallpaper(List<String> allowedOrientations, [String? searchTerm, Random? random]) async {
+    random ??= Random();
+    String orientation = allowedOrientations[random.nextInt(allowedOrientations.length)];
     Map<String, String> params = {
       "client_id": unsplashClientId,
-      "orientation": "landscape",
+      "orientation": orientation,
     };
     if (searchTerm != null) {
       params["query"] = searchTerm;
     }
     Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
+    if (response.containsKey("errors")) {
+      String error = (response["errors"] as List<dynamic>).reduce((value, element) => "$value $element");
+      if (error == "No photos found." && allowedOrientations.length > 1) {
+        allowedOrientations.remove(orientation);
+        newWallpaper(allowedOrientations, searchTerm, random);
+        return;
+      }
+      if (!mounted) {
+        return;
+      }
+      messengerKey.currentState!.showSnackBar(SnackBar(
+        content: Text(error),
+      ));
+      return;
+    }
     String url = response["urls"]["raw"];
+
+    Response imageResponse = await get(Uri.parse(url));
+    Uint8List wallpaperBytes = imageResponse.bodyBytes;
+    wallpaperBytes = await compute(adjustWallpaperToScreen, wallpaperBytes);
+    
+    Image wallpaper = Image.memory(wallpaperBytes);
     setState(() {
       credits = {
         "photographer_name": const Utf8Codec().decode((response["user"]["name"] as String).codeUnits),
         "photographer_url": response["user"]["links"]["html"],
         "shareURL": response["links"]["html"],
       };
-      saveSettings();
-      initSystemTray();
+      currentWallpaper = wallpaper;
     });
-
-    Response imageResponse = await get(Uri.parse(url));
-    setState(() {
-      currentWallpaper = Image.memory(imageResponse.bodyBytes);
-    });
-    await saveTempFile(imageResponse.bodyBytes, wallpaperPath);
+    await saveTempFile(wallpaperBytes, wallpaperPath);
     changeWallpaper(wallpaperPath);
 
     DateTime time = DateTime.now();
@@ -149,6 +172,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
       "minute": time.minute,
     };
     saveSettings();
+    initSystemTray();
   }
 
   void saveSettings() async {
@@ -189,6 +213,10 @@ class _MyAppState extends State<MyApp> with WindowListener {
     if (credits["shareURL"] != null) {
       prefs.setString("shareURL", credits["shareURL"]!);
     }
+
+    for (var MapEntry(key: orientation, value: value) in allowedOrientations.entries) {
+      prefs.setBool(orientation, value);
+    }
   }
 
   Future<void> loadSettings() async {
@@ -219,6 +247,17 @@ class _MyAppState extends State<MyApp> with WindowListener {
       "photographer_url": prefs.getString("photographer_url"),
       "shareURL": prefs.getString("shareURL"),
     };
+
+    for (String orientation in allowedOrientations.keys) {
+      allowedOrientations[orientation] = prefs.getBool(orientation)?? true;
+    }
+  }
+
+  void setAllowedOrientations(Map<String, bool> allowedOrientations) {
+    setState(() {
+      this.allowedOrientations = allowedOrientations;
+    });
+    saveSettings();
   }
 
   void setGroups(List<Group> groups, [bool save = true]) {
@@ -325,7 +364,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     final Menu menu = Menu();
     await menu.buildFrom([
       MenuItemLabel(label: "New Wallpaper", onClicked: (menuItem) => newWallpaperFromGroups(groups)),
-      MenuItemLabel(label: "New Random Wallpaper", onClicked: (menuItem) => newWallpaper()),
+      MenuItemLabel(label: "New Random Wallpaper", onClicked: (menuItem) => newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList())),
       MenuSeparator(),
       MenuItemLabel(label: "Credits:", enabled: false),
       MenuItemLabel(
@@ -421,6 +460,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: messengerKey,
       title: appTitle,
       theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
       home: loading
@@ -434,11 +474,13 @@ class _MyAppState extends State<MyApp> with WindowListener {
               user: user,
               currentWallpaper: currentWallpaper,
               credits: credits,
+              allowedOrientations: allowedOrientations,
               groups: groups,
               wallpaperOnStart: wallpaperOnStart,
               wallpaperOnInterval: wallpaperOnInterval,
               intervalHour: intervalHour,
               intervalMinute: intervalMinute,
+              setAllowedOrientations: setAllowedOrientations,
               setGroups: setGroups,
               newWallpaperFromGroups: newWallpaperFromGroups,
               newWallpaperFromGroup: newWallpaperFromGroup,

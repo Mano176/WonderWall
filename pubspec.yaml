@@ -41,6 +41,7 @@ dependencies:
   firebase_auth: ^4.17.8
   window_to_front: ^0.0.3
   oauth2: ^2.0.1
+  image: ^4.2.0
 
 dev_dependencies:
   flutter_test:
