@@ -103,7 +103,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   void newWallpaperFromGroups(List<Group> groups) async {
     List<Group> groupsToChooseFrom =
-        groups.where((element) => element.enabled && element.searchTerms.where((element) => element.enabled).toList().isNotEmpty).toList();
+        groups.where((element) => element.enabled && !element.deleted && element.searchTerms.where((element) => element.enabled && !element.deleted).toList().isNotEmpty).toList();
     Random random = Random();
     if (groupsToChooseFrom.isEmpty) {
       newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), null, random);
@@ -115,7 +115,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   void newWallpaperFromGroup(Group group, [Random? random]) async {
     random ??= Random();
-    List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled).toList();
+    List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled && !element.deleted).toList();
     newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), searchTermsToChooseFrom.isEmpty ? null : searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title, random);
   }
 
