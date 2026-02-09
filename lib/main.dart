@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:wonderwall/auth_manager.dart';
 import 'package:wonderwall/data.dart';
 import 'package:wonderwall/pages/settings.dart' as settings_page;
 import 'package:wonderwall/util.dart';
@@ -17,25 +16,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show compute, kDebugMode;
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
 import 'package:path_provider/path_provider.dart';
 
 const minSize = Size(1300, 1000);
 const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
 late final String unsplashClientId;
-late final String googleClientId;
-late final String googleClientSecret;
 late final bool fromAutostart;
 final String wallpaperPath =
     "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.jpg";
 Timer? scheduledTimer;
 late final File logFile;
 
-void main(args) async {
+void main(dynamic args) async {
   logFile = File("${(await getApplicationDocumentsDirectory()).path}/log.txt");
   await log("Application Start");
   args = {
@@ -48,8 +41,6 @@ void main(args) async {
   Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString(
       "assets/${kDebugMode ? "debug_secrets.json" : "secrets.json"}"));
   unsplashClientId = secrets["unsplashClientId"]!;
-  googleClientId = secrets["googleClientId"]!;
-  googleClientSecret = secrets["googleClientSecret"]!;
 
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   launchAtStartup.setup(
@@ -92,7 +83,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WindowListener {
   final messengerKey = GlobalKey<ScaffoldMessengerState>();
-  User? user;
   bool loading = true;
   Image? currentWallpaper;
   late bool wallpaperOnStart;
@@ -243,20 +233,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
     List<Map<String, dynamic>> groupMapList =
         groups.map((e) => e.toMap()).toList();
 
-    if (AuthManager.accessToken != null) {
-      FirebaseFirestore db = FirebaseFirestore.instance;
-
-      QuerySnapshot<Map<String, dynamic>> querySnapshot =
-          await db.collection(user!.uid).get();
-      for (QueryDocumentSnapshot doc in querySnapshot.docs) {
-        doc.reference.delete();
-      }
-
-      for (Map<String, dynamic> groupMap in groupMapList) {
-        db.collection(user!.uid).add(groupMap);
-      }
-    }
-
     prefs.setString("groups", jsonEncode(groupMapList));
     if (credits["photographer_name"] != null) {
       prefs.setString("photographer_name", credits["photographer_name"]!);
@@ -276,7 +252,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   Future<void> loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    AuthManager.accessToken = prefs.getString("google_accesstoken");
     wallpaperOnStart = prefs.getBool("wallpaperOnStart") ?? true;
     wallpaperOnInterval = prefs.getBool("wallpaperOnInterval") ?? true;
     int? lastChangedYear = prefs.getInt("lastChangedYear");
@@ -389,7 +364,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
       await loadSettings();
-      await initializeFirebase();
       initSystemTray();
       if (wallpaperOnInterval) {
         scheduleNextWallpaper(intervalHour, intervalMinute);
@@ -481,80 +455,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
     });
   }
 
-  Future<void> initializeFirebase() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
-      setState(() {
-        this.user = user;
-      });
-      if (user != null) {
-        mergeCloudGroupsWithLocalGroups();
-      }
-    });
-  }
-
-  void mergeCloudGroupsWithLocalGroups() async {
-    List<Group> mergedGroups = List.empty(growable: true);
-    List<Group> cloudGroups =
-        (await FirebaseFirestore.instance.collection(user!.uid).get())
-            .docs
-            .map((doc) => Group.fromMap(doc.data()))
-            .toList();
-    List<String> titles = cloudGroups.map((group) => group.title).toList();
-    for (String title in groups.map((group) => group.title)) {
-      if (!titles.contains(title)) {
-        titles.add(title);
-      }
-    }
-
-    for (String title in titles) {
-      Group? cloudGroup =
-          cloudGroups.where((group) => group.title == title).firstOrNull;
-      Group? localGroup =
-          groups.where((group) => group.title == title).firstOrNull;
-
-      Group groupDataSource = (cloudGroup != null &&
-              (localGroup == null ||
-                  cloudGroup.editDate.isAfter(localGroup.editDate))
-          ? cloudGroup
-          : localGroup)!;
-
-      List<GroupElement> mergedSearchTerms = List.empty(growable: true);
-      List<String> searchTerms = cloudGroup == null
-          ? List.empty(growable: true)
-          : cloudGroup.searchTerms.map((e) => e.title).toList();
-      for (String searchTerm in localGroup == null
-          ? List.empty()
-          : localGroup.searchTerms.map((e) => e.title)) {
-        if (!searchTerms.contains(searchTerm)) {
-          searchTerms.add(searchTerm);
-        }
-      }
-
-      for (String searchTerm in searchTerms) {
-        GroupElement? cloudSearchTerm = cloudGroup?.searchTerms
-            .where((element) => element.title == searchTerm)
-            .firstOrNull;
-        GroupElement? localSearchTerm = localGroup?.searchTerms
-            .where((element) => element.title == searchTerm)
-            .firstOrNull;
-
-        GroupElement searchTermDataSource = (cloudSearchTerm != null &&
-                (localSearchTerm == null ||
-                    cloudSearchTerm.editDate.isAfter(localSearchTerm.editDate))
-            ? cloudSearchTerm
-            : localSearchTerm)!;
-        mergedSearchTerms.add(searchTermDataSource);
-      }
-      groupDataSource.searchTerms = mergedSearchTerms;
-      mergedGroups.add(groupDataSource);
-    }
-    setGroups(mergedGroups);
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -571,7 +471,6 @@ class _MyAppState extends State<MyApp> with WindowListener {
               child: CircularProgressIndicator(),
             ))
           : settings_page.Settings(
-              user: user,
               currentWallpaper: currentWallpaper,
               credits: credits,
               allowedOrientations: allowedOrientations,

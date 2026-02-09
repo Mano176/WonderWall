@@ -36,9 +36,6 @@ To install your own version of Wonderwall follow these steps:
 1. Download the newst version from [Releases](https://github.com/Mano176/WonderWall/releases)
 2. Head to [Unsplash](https://unsplash.com/developers) and create your own Unsplash-App. Then copy your client id
 3. Open the file `wonderwall/data/flutter_assets/assets/secrets.json` and replace `[your unplash client id]` with your Unsplash client id
-4. Head to [Firebase](https://firebase.google.com/) and create a new project with `Authentication` and `Firestore Database` enabled
-5. Under `Authentication >> Sign-in method` enable Google as provider and locate the Web client ID and the Web client secret
-6. Again open `wonderwall/data/flutter_assets/assets/secrets.json` and replace `[your google client id]` with the Web client ID and replace `[your google client secret]` with the Web client secret
-5. Run `wonderwall.exe`
+4. Run `wonderwall.exe`
 
 [//]: <> (installation_end)
