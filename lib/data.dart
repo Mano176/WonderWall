@@ -51,4 +51,9 @@ class GroupElement {
       map["enabled"] ?? true
     );
   }
+
+  @override
+  String toString() {
+    return toMap().toString();
+  }
 }

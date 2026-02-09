@@ -21,26 +21,32 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:path_provider/path_provider.dart';
 
-
-const minSize = Size(1200, 900);
+const minSize = Size(1300, 1000);
 const String appTitle = "WonderWall";
 const String baseURL = "https://api.unsplash.com/";
 late final String unsplashClientId;
 late final String googleClientId;
 late final String googleClientSecret;
 late final bool fromAutostart;
-final String wallpaperPath = "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.jpg";
+final String wallpaperPath =
+    "${Platform.environment["tmp"]!}\\$appTitle\\wallpaper.jpg";
 Timer? scheduledTimer;
+late final File logFile;
 
 void main(args) async {
+  logFile = File("${(await getApplicationDocumentsDirectory()).path}/log.txt");
+  await log("Application Start");
   args = {
     for (var arg in [for (var arg in args) arg.split("=")]) arg[0]: arg[1]
   };
-  fromAutostart = bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
+  fromAutostart =
+      bool.parse(args["fromAutostart"] ?? "false", caseSensitive: false);
 
   WidgetsFlutterBinding.ensureInitialized();
-  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString("assets/${kDebugMode ? "debug_secrets.json" : "secrets.json"}"));
+  Map<String, dynamic> secrets = jsonDecode(await rootBundle.loadString(
+      "assets/${kDebugMode ? "debug_secrets.json" : "secrets.json"}"));
   unsplashClientId = secrets["unsplashClientId"]!;
   googleClientId = secrets["googleClientId"]!;
   googleClientSecret = secrets["googleClientSecret"]!;
@@ -59,6 +65,11 @@ void main(args) async {
   await windowManager.setTitle(appTitle);
   await windowManager.center();
   runApp(const MyApp());
+}
+
+Future<void> log(String text) async {
+  text = "${DateTime.now()}:\t$text${Platform.lineTerminator}";
+  await logFile.writeAsString(text, mode: FileMode.append, flush: true);
 }
 
 void scheduleTask(void Function() callback, DateTime time) {
@@ -102,36 +113,76 @@ class _MyAppState extends State<MyApp> with WindowListener {
   };
 
   void newWallpaperFromGroups(List<Group> groups) async {
-    List<Group> groupsToChooseFrom =
-        groups.where((element) => element.enabled && !element.deleted && element.searchTerms.where((element) => element.enabled && !element.deleted).toList().isNotEmpty).toList();
+    List<Group> groupsToChooseFrom = groups
+        .where((element) =>
+            element.enabled &&
+            !element.deleted &&
+            element.searchTerms
+                .where((element) => element.enabled && !element.deleted)
+                .toList()
+                .isNotEmpty)
+        .toList();
+    await log("newWallpaperFromGroups:groupsToChooseFrom: $groupsToChooseFrom");
+
     Random random = Random();
     if (groupsToChooseFrom.isEmpty) {
-      newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), null, random);
+      newWallpaper(
+          allowedOrientations.keys
+              .where((orientation) => allowedOrientations[orientation]!)
+              .toList(),
+          null,
+          random);
     } else {
-      Group group = groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
+      Group group =
+          groupsToChooseFrom[random.nextInt(groupsToChooseFrom.length)];
       newWallpaperFromGroup(group, random);
     }
   }
 
   void newWallpaperFromGroup(Group group, [Random? random]) async {
+    await log("newWallpaperFromGroup:group: $group");
     random ??= Random();
-    List<GroupElement> searchTermsToChooseFrom = group.searchTerms.where((element) => element.enabled && !element.deleted).toList();
-    newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList(), searchTermsToChooseFrom.isEmpty ? null : searchTermsToChooseFrom[random.nextInt(searchTermsToChooseFrom.length)].title, random);
+    List<GroupElement> searchTermsToChooseFrom = group.searchTerms
+        .where((element) => element.enabled && !element.deleted)
+        .toList();
+    await log(
+        "newWallpaperFromGroup:searchTermsToChooseFrom: $searchTermsToChooseFrom");
+    newWallpaper(
+        allowedOrientations.keys
+            .where((orientation) => allowedOrientations[orientation]!)
+            .toList(),
+        searchTermsToChooseFrom.isEmpty
+            ? null
+            : searchTermsToChooseFrom[
+                    random.nextInt(searchTermsToChooseFrom.length)]
+                .title,
+        random);
   }
 
-  void newWallpaper(List<String> allowedOrientations, [String? searchTerm, Random? random]) async {
+  void newWallpaper(List<String> allowedOrientations,
+      [String? searchTerm, Random? random]) async {
+    if (searchTerm != null) {
+      await log("newWallpaper:searchTerm: $searchTerm");
+    }
     random ??= Random();
-    String orientation = allowedOrientations[random.nextInt(allowedOrientations.length)];
     Map<String, String> params = {
       "client_id": unsplashClientId,
-      "orientation": orientation,
     };
+
+    String orientation =
+        allowedOrientations[random.nextInt(allowedOrientations.length)];
+    if (allowedOrientations.length != 3) {
+      params["orientation"] = orientation;
+    }
+
     if (searchTerm != null) {
       params["query"] = searchTerm;
     }
-    Map<String, dynamic> response = await sendGetRequest("${baseURL}photos/random", params);
+    Map<String, dynamic> response =
+        await sendGetRequest("${baseURL}photos/random", params);
     if (response.containsKey("errors")) {
-      String error = (response["errors"] as List<dynamic>).reduce((value, element) => "$value $element");
+      String error = (response["errors"] as List<dynamic>)
+          .reduce((value, element) => "$value $element");
       if (error == "No photos found." && allowedOrientations.length > 1) {
         allowedOrientations.remove(orientation);
         newWallpaper(allowedOrientations, searchTerm, random);
@@ -150,11 +201,12 @@ class _MyAppState extends State<MyApp> with WindowListener {
     Response imageResponse = await get(Uri.parse(url));
     Uint8List wallpaperBytes = imageResponse.bodyBytes;
     wallpaperBytes = await compute(adjustWallpaperToScreen, wallpaperBytes);
-    
+
     Image wallpaper = Image.memory(wallpaperBytes);
     setState(() {
       credits = {
-        "photographer_name": const Utf8Codec().decode((response["user"]["name"] as String).codeUnits),
+        "photographer_name": const Utf8Codec()
+            .decode((response["user"]["name"] as String).codeUnits),
         "photographer_url": response["user"]["links"]["html"],
         "shareURL": response["links"]["html"],
       };
@@ -188,19 +240,21 @@ class _MyAppState extends State<MyApp> with WindowListener {
       prefs.setInt("lastChangedHour", lastChanged!["hour"]!);
       prefs.setInt("lastChangedMinute", lastChanged!["minute"]!);
     }
-    List<Map<String, dynamic>> groupMapList = groups.map((e) => e.toMap()).toList();
+    List<Map<String, dynamic>> groupMapList =
+        groups.map((e) => e.toMap()).toList();
 
     if (AuthManager.accessToken != null) {
-        FirebaseFirestore db = FirebaseFirestore.instance;
+      FirebaseFirestore db = FirebaseFirestore.instance;
 
-        QuerySnapshot<Map<String, dynamic>> querySnapshot = await db.collection(user!.uid).get();
-        for (QueryDocumentSnapshot doc in querySnapshot.docs) {
-          doc.reference.delete();
-        }
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await db.collection(user!.uid).get();
+      for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+        doc.reference.delete();
+      }
 
-        for (Map<String, dynamic> groupMap in groupMapList) {
-          db.collection(user!.uid).add(groupMap);
-        }
+      for (Map<String, dynamic> groupMap in groupMapList) {
+        db.collection(user!.uid).add(groupMap);
+      }
     }
 
     prefs.setString("groups", jsonEncode(groupMapList));
@@ -214,7 +268,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
       prefs.setString("shareURL", credits["shareURL"]!);
     }
 
-    for (var MapEntry(key: orientation, value: value) in allowedOrientations.entries) {
+    for (var MapEntry(key: orientation, value: value)
+        in allowedOrientations.entries) {
       prefs.setBool(orientation, value);
     }
   }
@@ -229,7 +284,13 @@ class _MyAppState extends State<MyApp> with WindowListener {
     int? lastChangedDay = prefs.getInt("lastChangedDay");
     int? lastChangedHour = prefs.getInt("lastChangedHour");
     int? lastChangedMinute = prefs.getInt("lastChangedMinute");
-    if ([lastChangedYear, lastChangedMonth, lastChangedDay, lastChangedHour, lastChangedMinute].every((element) => element != null)) {
+    if ([
+      lastChangedYear,
+      lastChangedMonth,
+      lastChangedDay,
+      lastChangedHour,
+      lastChangedMinute
+    ].every((element) => element != null)) {
       lastChanged = {
         "year": lastChangedYear!,
         "month": lastChangedMonth!,
@@ -241,7 +302,10 @@ class _MyAppState extends State<MyApp> with WindowListener {
     intervalHour = prefs.getInt("intervalHour") ?? 0;
     intervalMinute = prefs.getInt("intervalMinute") ?? 0;
     String? groupsString = prefs.getString("groups");
-    groups = groupsString == null? List.empty(growable: true) : List<Group>.from(jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
+    groups = groupsString == null
+        ? List.empty(growable: true)
+        : List<Group>.from(
+            jsonDecode(groupsString).map((e) => Group.fromMap(e)).toList());
     credits = {
       "photographer_name": prefs.getString("photographer_name") ?? "Unknown",
       "photographer_url": prefs.getString("photographer_url"),
@@ -249,7 +313,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
     };
 
     for (String orientation in allowedOrientations.keys) {
-      allowedOrientations[orientation] = prefs.getBool(orientation)?? true;
+      allowedOrientations[orientation] = prefs.getBool(orientation) ?? true;
     }
   }
 
@@ -333,9 +397,14 @@ class _MyAppState extends State<MyApp> with WindowListener {
       bool changeBecauseInterval = false;
       DateTime now = DateTime.now();
       if (wallpaperOnInterval && lastChanged != null) {
-        DateTime lastChangedTime =
-            DateTime(lastChanged!["year"]!, lastChanged!["month"]!, lastChanged!["day"]!, lastChanged!["hour"]!, lastChanged!["minute"]!);
-        DateTime changeTime = DateTime(now.year, now.month, now.day, intervalHour, intervalMinute);
+        DateTime lastChangedTime = DateTime(
+            lastChanged!["year"]!,
+            lastChanged!["month"]!,
+            lastChanged!["day"]!,
+            lastChanged!["hour"]!,
+            lastChanged!["minute"]!);
+        DateTime changeTime = DateTime(
+            now.year, now.month, now.day, intervalHour, intervalMinute);
         if (changeTime.isAfter(lastChangedTime) && now.isAfter(changeTime)) {
           changeBecauseInterval = true;
         }
@@ -363,8 +432,14 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
     final Menu menu = Menu();
     await menu.buildFrom([
-      MenuItemLabel(label: "New Wallpaper", onClicked: (menuItem) => newWallpaperFromGroups(groups)),
-      MenuItemLabel(label: "New Random Wallpaper", onClicked: (menuItem) => newWallpaper(allowedOrientations.keys.where((orientation) => allowedOrientations[orientation]!).toList())),
+      MenuItemLabel(
+          label: "New Wallpaper",
+          onClicked: (menuItem) => newWallpaperFromGroups(groups)),
+      MenuItemLabel(
+          label: "New Random Wallpaper",
+          onClicked: (menuItem) => newWallpaper(allowedOrientations.keys
+              .where((orientation) => allowedOrientations[orientation]!)
+              .toList())),
       MenuSeparator(),
       MenuItemLabel(label: "Credits:", enabled: false),
       MenuItemLabel(
@@ -378,7 +453,8 @@ class _MyAppState extends State<MyApp> with WindowListener {
         onClicked: (_) => launchUrl(Uri.parse(credits["photographer_url"]!)),
       ),
       MenuSeparator(),
-      MenuItemLabel(label: "Settings", onClicked: (menuItem) => appWindow.show()),
+      MenuItemLabel(
+          label: "Settings", onClicked: (menuItem) => appWindow.show()),
       MenuItemCheckbox(
         label: "Autostart",
         checked: await launchAtStartup.isEnabled(),
@@ -391,13 +467,15 @@ class _MyAppState extends State<MyApp> with WindowListener {
           initSystemTray();
         },
       ),
-      MenuItemLabel(label: "Exit", onClicked: (menuItem) => windowManager.destroy()),
+      MenuItemLabel(
+          label: "Exit", onClicked: (menuItem) => windowManager.destroy()),
     ]);
     await systemTray.setContextMenu(menu);
 
     // handle system tray left and right click
     systemTray.registerSystemTrayEventHandler((eventName) {
-      if (eventName == kSystemTrayEventClick || eventName == kSystemTrayEventRightClick) {
+      if (eventName == kSystemTrayEventClick ||
+          eventName == kSystemTrayEventRightClick) {
         systemTray.popUpContextMenu();
       }
     });
@@ -408,9 +486,7 @@ class _MyAppState extends State<MyApp> with WindowListener {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    FirebaseAuth.instance
-    .authStateChanges()
-    .listen((User? user) async {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
       setState(() {
         this.user = user;
       });
@@ -422,7 +498,11 @@ class _MyAppState extends State<MyApp> with WindowListener {
 
   void mergeCloudGroupsWithLocalGroups() async {
     List<Group> mergedGroups = List.empty(growable: true);
-    List<Group> cloudGroups = (await FirebaseFirestore.instance.collection(user!.uid).get()).docs.map((doc) => Group.fromMap(doc.data())).toList();
+    List<Group> cloudGroups =
+        (await FirebaseFirestore.instance.collection(user!.uid).get())
+            .docs
+            .map((doc) => Group.fromMap(doc.data()))
+            .toList();
     List<String> titles = cloudGroups.map((group) => group.title).toList();
     for (String title in groups.map((group) => group.title)) {
       if (!titles.contains(title)) {
@@ -431,24 +511,42 @@ class _MyAppState extends State<MyApp> with WindowListener {
     }
 
     for (String title in titles) {
-      Group? cloudGroup = cloudGroups.where((group) => group.title == title).firstOrNull;
-      Group? localGroup = groups.where((group) => group.title == title).firstOrNull;
+      Group? cloudGroup =
+          cloudGroups.where((group) => group.title == title).firstOrNull;
+      Group? localGroup =
+          groups.where((group) => group.title == title).firstOrNull;
 
-      Group groupDataSource = (cloudGroup != null && (localGroup == null || cloudGroup.editDate.isAfter(localGroup.editDate))? cloudGroup : localGroup)!;
-      
+      Group groupDataSource = (cloudGroup != null &&
+              (localGroup == null ||
+                  cloudGroup.editDate.isAfter(localGroup.editDate))
+          ? cloudGroup
+          : localGroup)!;
+
       List<GroupElement> mergedSearchTerms = List.empty(growable: true);
-      List<String> searchTerms = cloudGroup == null? List.empty(growable: true) : cloudGroup.searchTerms.map((e) => e.title).toList();
-      for (String searchTerm in localGroup == null? List.empty() : localGroup.searchTerms.map((e) => e.title)) {
+      List<String> searchTerms = cloudGroup == null
+          ? List.empty(growable: true)
+          : cloudGroup.searchTerms.map((e) => e.title).toList();
+      for (String searchTerm in localGroup == null
+          ? List.empty()
+          : localGroup.searchTerms.map((e) => e.title)) {
         if (!searchTerms.contains(searchTerm)) {
           searchTerms.add(searchTerm);
         }
       }
 
-      for (String searchTerm in searchTerms) {      
-        GroupElement? cloudSearchTerm = cloudGroup?.searchTerms.where((element) => element.title == searchTerm).firstOrNull;
-        GroupElement? localSearchTerm = localGroup?.searchTerms.where((element) => element.title == searchTerm).firstOrNull;
+      for (String searchTerm in searchTerms) {
+        GroupElement? cloudSearchTerm = cloudGroup?.searchTerms
+            .where((element) => element.title == searchTerm)
+            .firstOrNull;
+        GroupElement? localSearchTerm = localGroup?.searchTerms
+            .where((element) => element.title == searchTerm)
+            .firstOrNull;
 
-        GroupElement searchTermDataSource = (cloudSearchTerm != null && (localSearchTerm == null || cloudSearchTerm.editDate.isAfter(localSearchTerm.editDate))? cloudSearchTerm : localSearchTerm)!;
+        GroupElement searchTermDataSource = (cloudSearchTerm != null &&
+                (localSearchTerm == null ||
+                    cloudSearchTerm.editDate.isAfter(localSearchTerm.editDate))
+            ? cloudSearchTerm
+            : localSearchTerm)!;
         mergedSearchTerms.add(searchTermDataSource);
       }
       groupDataSource.searchTerms = mergedSearchTerms;
@@ -462,7 +560,9 @@ class _MyAppState extends State<MyApp> with WindowListener {
     return MaterialApp(
       scaffoldMessengerKey: messengerKey,
       title: appTitle,
-      theme: ThemeData.from(colorScheme: const ColorScheme.dark().copyWith(primary: Colors.white)),
+      theme: ThemeData.from(
+          colorScheme:
+              const ColorScheme.dark().copyWith(primary: Colors.white)),
       home: loading
           ? const Center(
               child: SizedBox(

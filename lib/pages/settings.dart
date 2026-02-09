@@ -163,7 +163,7 @@ class _SettingsState extends State<Settings> {
                 },
                 onEdit: () {
                   group.isEditing = !group.isEditing;
-                  setGroups(widget.groups);
+                  setGroups(widget.groups, false);
                 },
                 onDelete: () {
                   DateTime deletionDateTime = DateTime.now();
@@ -230,7 +230,7 @@ class _SettingsState extends State<Settings> {
                       },
                       onEdit: () {
                         element.isEditing = !element.isEditing;
-                        setGroups(widget.groups);
+                        setGroups(widget.groups, false);
                       },
                       onDelete: () {
                         element.deleted = true;

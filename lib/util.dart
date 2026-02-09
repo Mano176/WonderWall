@@ -21,12 +21,10 @@ void changeWallpaper(String path) {
   return (width, height);
 }
 
-Future<Map<String, dynamic>> sendGetRequest(String url, Map<String, String> params) async {
-  String paramString = "";
-  params.forEach((key, value) {
-    paramString += "$key=$value&";
-  });
-  return jsonDecode((await get(Uri.parse("$url?$paramString"))).body);
+Future<Map<String, dynamic>> sendGetRequest(
+    String url, Map<String, String> params) async {
+  Uri uri = Uri.parse(url).replace(queryParameters: params);
+  return jsonDecode((await get(uri)).body);
 }
 
 Future<void> saveTempFile(List<int> data, String path) async {
@@ -38,23 +36,34 @@ Future<void> saveTempFile(List<int> data, String path) async {
 Future<Uint8List> adjustWallpaperToScreen(Uint8List wallpaper) async {
   img.Image image = img.decodeJpg(wallpaper)!;
   var (screenWidth, screenHeight) = getWindowsScreenSize();
-  
+
   img.Image blurImage;
   if (image.width < image.height) {
-    int cropHeight = (image.width*screenHeight/screenWidth).round();
-    blurImage = img.copyCrop(image, x: 0, y: ((image.height-cropHeight)/2).round(), width: image.width, height: cropHeight, antialias: false);
-    blurImage = img.copyResize(blurImage, width: screenWidth, height: screenHeight);
+    int cropHeight = (image.width * screenHeight / screenWidth).round();
+    blurImage = img.copyCrop(image,
+        x: 0,
+        y: ((image.height - cropHeight) / 2).round(),
+        width: image.width,
+        height: cropHeight,
+        antialias: false);
+    blurImage =
+        img.copyResize(blurImage, width: screenWidth, height: screenHeight);
 
     image = img.copyResize(image, maintainAspect: true, height: screenHeight);
     if (image.width > screenWidth) {
       image = img.copyResize(image, maintainAspect: true, width: screenWidth);
     }
-  }
-  else {
-    int cropWidth = (image.height*screenWidth/screenHeight).round();
-    blurImage = img.copyCrop(image, x: ((image.width-cropWidth)/2).round(), y: 0, width: cropWidth, height: image.height, antialias: false);
-    blurImage = img.copyResize(blurImage, width: screenWidth, height: screenHeight);
-    
+  } else {
+    int cropWidth = (image.height * screenWidth / screenHeight).round();
+    blurImage = img.copyCrop(image,
+        x: ((image.width - cropWidth) / 2).round(),
+        y: 0,
+        width: cropWidth,
+        height: image.height,
+        antialias: false);
+    blurImage =
+        img.copyResize(blurImage, width: screenWidth, height: screenHeight);
+
     image = img.copyResize(image, maintainAspect: true, width: screenWidth);
     if (image.height > screenHeight) {
       image = img.copyResize(image, maintainAspect: true, height: screenHeight);
@@ -67,4 +76,3 @@ Future<Uint8List> adjustWallpaperToScreen(Uint8List wallpaper) async {
 
   return img.encodeJpg(image);
 }
-
