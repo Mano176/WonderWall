@@ -38,9 +38,6 @@
             if (trayService != null)
             {
                 trayService.Initialize();
-                trayService.ClickHandler = () =>
-                    ServiceProvider.GetService<INotificationService>()
-                        ?.ShowNotification("Hello Build! 😻 From .NET MAUI", "How's your weather?  It's sunny where we are 🌞");
             }
         }
     }

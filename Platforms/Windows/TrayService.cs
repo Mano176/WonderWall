@@ -13,17 +13,13 @@ public class TrayService : ITrayService
 
     public void Initialize()
     {
-        tray = new WindowsTrayIcon("Platforms/Windows/trayicon.ico");
-        tray.LeftClick = () =>
-        {
-            WindowExtensions.BringToFront();
-            ClickHandler?.Invoke();
-        };
-
-        tray.RightClick = () =>
+        Action clickAction = () =>
         {
             ShowTrayContextMenu();
         };
+        tray = new WindowsTrayIcon("Platforms/Windows/trayicon.ico");
+        tray.LeftClick = clickAction;
+        tray.RightClick = clickAction;
     }
 
     private void ShowTrayContextMenu()

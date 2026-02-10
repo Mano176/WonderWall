@@ -18,7 +18,6 @@ public static class MauiProgram
         var services = builder.Services;
 #if WINDOWS
         services.AddSingleton<ITrayService, WinUI.TrayService>();
-        services.AddSingleton<INotificationService, WinUI.NotificationService>();
 #endif
 
 
