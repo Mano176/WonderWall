@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="WonderWall.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:WonderWall"
-    Title="WonderWall">
+<Shell x:Class="WonderWall.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:WonderWall"
+       xmlns:pages="clr-namespace:WonderWall.Pages"
+       x:DataType="local:AppShell"
+       Title="WonderWall">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent Title="Tab 1"
+                      ContentTemplate="{DataTemplate pages:CurrentWallpaperPage}" />
+        <ShellContent Title="Tab 2"
+                      ContentTemplate="{DataTemplate pages:GroupsPage}" />
+        <ShellContent Title="Tab 3"
+                      ContentTemplate="{DataTemplate pages:SettingsPage}" />
+    </TabBar>
 
 </Shell>
