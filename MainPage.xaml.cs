@@ -1,11 +1,12 @@
-﻿namespace WonderWall
+﻿
+namespace WonderWall
 {
     public partial class MainPage : ContentPage
     {
         int count = 0;
         bool isSetup = false;
 
-        public MainPage()
+        public MainPage(DbContext dbContext)
         {
             InitializeComponent();
 
@@ -19,8 +20,6 @@
 
         private void OnCounterClicked(object? sender, EventArgs e)
         {
-            WindowExtensions.MinimizeToTray();
-
             count++;
 
             if (count == 1)
