@@ -15,18 +15,10 @@ namespace WonderWall
         {
             Initialize();
 
-            Page page;
-            if (DeviceInfo.Idiom == DeviceIdiom.Desktop)
-            {
-                page = new MainPage();
-            }
-            else
-            {
-                page = new AppShell();
-            }
-
-            Window window = new Window(page);
+            Window window = new Window(new AppShell());
             window.Title = "WonderWall";
+            window.MinimumWidth = 1200;
+            window.MinimumHeight = 900;
 
             return window;
         }

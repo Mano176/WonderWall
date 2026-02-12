@@ -1,0 +1,28 @@
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:viewmodels="clr-namespace:WonderWall.ViewModels"
+               x:Class="WonderWall.Popups.EditStringPopup"
+               x:TypeArguments="x:String"
+               x:DataType="viewmodels:EditStringPopupViewModel"
+               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+               Opened="Popup_Opened">
+    <VerticalStackLayout WidthRequest="250"
+                         Margin="10"
+                         Spacing="10">
+        <Label Text="{Binding Title}" />
+        <Entry Text="{Binding Value}"
+               x:Name="Entry" />
+
+        <HorizontalStackLayout HorizontalOptions="Center"
+                               Spacing="10"
+                               Margin="0, 10, 0, 0">
+            <Button Text="Cancel"
+                    WidthRequest="75"
+                    Command="{Binding CancelCommand}" />
+            <Button Text="Save"
+                    WidthRequest="75"
+                    Command="{Binding SaveCommand}" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</toolkit:Popup>

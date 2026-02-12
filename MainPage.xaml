@@ -7,26 +7,50 @@
              x:DataType="local:MainPage">
 
     <Grid ColumnDefinitions="*, 1, *"
-          RowDefinitions="Auto, 1, *">
+          RowDefinitions="Auto, Auto, 1, Auto, *">
 
-        <views:GroupsView Grid.Row="0"
-                          Grid.Column="0"
-                          Grid.RowSpan="3" />
+        <Label Grid.Row="0"
+               Grid.Column="0"
+               Text="Search Terms"
+               FontSize="Large"
+               Margin="10" />
+
+        <ContentView Grid.Row="1"
+                     Grid.Column="0"
+                     Grid.RowSpan="4"
+                     Padding="5"
+                     x:Name="groupsContentView" />
 
         <BoxView Grid.Row="0"
                  Grid.Column="1"
-                 Grid.RowSpan="3"
+                 Grid.RowSpan="5"
                  Color="Gray" />
 
-        <views:SettingsView Grid.Row="0"
-                            Grid.Column="2" />
+        <Label Grid.Row="0"
+               Grid.Column="2"
+               Text="Settings"
+               FontSize="Large"
+               Margin="10" />
 
-        <BoxView Grid.Row="1"
+        <ContentView Grid.Row="1"
+                     Grid.Column="2"
+                     Padding="5"
+                     x:Name="settingsContentView" />
+
+        <BoxView Grid.Row="2"
                  Grid.Column="2"
                  Color="Gray" />
 
-        <views:CurrentWallpaperView Grid.Row="2"
-                                    Grid.Column="2" />
+        <Label Grid.Row="3"
+               Grid.Column="2"
+               Text="Current Wallpaper"
+               FontSize="Large"
+               Margin="10" />
+
+        <ContentView Grid.Row="4"
+                     Grid.Column="2"
+                     Padding="5"
+                     x:Name="currentWallpaperContentView" />
 
     </Grid>
 

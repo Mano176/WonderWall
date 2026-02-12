@@ -2,8 +2,9 @@ namespace WonderWall.Views;
 
 public partial class GroupsView : ContentView
 {
-	public GroupsView()
+	public GroupsView(GroupsViewModel viewModel)
 	{
 		InitializeComponent();
-	}
+		BindingContext = viewModel;
+    }
 }

@@ -7,13 +7,21 @@
        x:DataType="local:AppShell"
        Title="WonderWall">
 
-    <TabBar>
-        <ShellContent Title="Tab 1"
-                      ContentTemplate="{DataTemplate pages:CurrentWallpaperPage}" />
-        <ShellContent Title="Tab 2"
-                      ContentTemplate="{DataTemplate pages:GroupsPage}" />
-        <ShellContent Title="Tab 3"
-                      ContentTemplate="{DataTemplate pages:SettingsPage}" />
-    </TabBar>
+    <OnIdiom x:TypeArguments="ShellItem">
+        <OnIdiom.Phone>
+            <TabBar>
+                <ShellContent Title="Current"
+                              ContentTemplate="{DataTemplate pages:CurrentWallpaperPage}" />
+                <ShellContent Title="Search Terms"
+                              ContentTemplate="{DataTemplate pages:GroupsPage}" />
+                <ShellContent Title="Settings"
+                              ContentTemplate="{DataTemplate pages:SettingsPage}" />
+            </TabBar>
+        </OnIdiom.Phone>
+
+        <OnIdiom.Desktop>
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        </OnIdiom.Desktop>
+    </OnIdiom>
 
 </Shell>

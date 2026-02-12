@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WonderWall.Data;
 
 namespace WonderWall.Database;
 
 public class DbContext : Microsoft.EntityFrameworkCore.DbContext
 {
-    //public DbSet<TodoItem> TodoItems { get; set; }
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<SearchTerm> SearchTerms { get; set; }
 
     public DbContext()
     {
