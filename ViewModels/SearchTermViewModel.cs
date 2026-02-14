@@ -4,7 +4,7 @@ namespace WonderWall.ViewModels;
 
 public class SearchTermViewModel : ObservableObject
 {
-    private readonly SearchTerm searchTerm;
+    public readonly SearchTerm searchTerm;
 
     public SearchTermViewModel(SearchTerm searchterm)
     {
@@ -20,6 +20,19 @@ public class SearchTermViewModel : ObservableObject
             {
                 searchTerm.Title = value;
                 OnPropertyChanged(nameof(Title));
+            }
+        }
+    }
+
+    public bool IsEnabled
+    {
+        get => searchTerm.IsEnabled;
+        set
+        {
+            if (searchTerm.IsEnabled != value)
+            {
+                searchTerm.IsEnabled = value;
+                OnPropertyChanged();
             }
         }
     }

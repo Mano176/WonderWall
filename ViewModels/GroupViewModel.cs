@@ -5,7 +5,7 @@ namespace WonderWall.ViewModels;
 
 public partial class GroupViewModel : ObservableObject
 {
-    private readonly Group group;
+    public readonly Group group;
 
     public GroupViewModel(Group group)
     {
@@ -26,7 +26,20 @@ public partial class GroupViewModel : ObservableObject
             if (group.Title != value)
             {
                 group.Title = value;
-                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsEnabled
+    {
+        get => group.IsEnabled;
+        set
+        {
+            if (group.IsEnabled != value)
+            {
+                group.IsEnabled = value;
+                OnPropertyChanged();
             }
         }
     }

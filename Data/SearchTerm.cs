@@ -11,4 +11,6 @@ public class SearchTerm
     public int GroupId { get; set; }
 
     public required string Title { get; set; }
+
+    public bool IsEnabled { get; set; } = true;
 }

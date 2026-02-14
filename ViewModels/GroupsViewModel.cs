@@ -95,4 +95,20 @@ public partial class GroupsViewModel : ObservableObject
 
         group.SearchTerms.Add(new SearchTermViewModel(searchTerm));
     }
+
+    [RelayCommand]
+    private void ToggleGroup(GroupViewModel group)
+    {
+        dbContext.Groups.Attach(group.group);
+        group.IsEnabled = !group.IsEnabled;
+        dbContext.SaveChanges();
+    }
+
+    [RelayCommand]
+    private void ToggleSearchTerm(SearchTermViewModel searchTerm)
+    {
+        dbContext.SearchTerms.Attach(searchTerm.searchTerm);
+        searchTerm.IsEnabled = !searchTerm.IsEnabled;
+        dbContext.SaveChanges();
+    }
 }

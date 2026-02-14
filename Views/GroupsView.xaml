@@ -4,14 +4,25 @@
              xmlns:viewmodels="clr-namespace:WonderWall.ViewModels"
              xmlns:behaviors="clr-namespace:WonderWall.Behaviors"
              xmlns:local="clr-namespace:WonderWall"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="WonderWall.Views.GroupsView"
              x:DataType="viewmodels:GroupsViewModel">
+
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <toolkit:VariableMultiValueConverter x:Key="AndMultiConverter"
+                                                 ConditionType="All"
+                                                 Count="2" />
+        </ResourceDictionary>
+    </ContentView.Resources>
+
     <CollectionView ItemsSource="{Binding Groups}">
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="viewmodels:GroupViewModel">
                 <VerticalStackLayout Padding="0, 2.5, 0, 2.5">
 
-                    <HorizontalStackLayout HorizontalOptions="Fill">
+                    <HorizontalStackLayout HorizontalOptions="Fill"
+                                           Spacing="6">
                         <HorizontalStackLayout.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding SelectGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
                                                   CommandParameter="{Binding .}" />
@@ -27,10 +38,14 @@
                             </Image.Behaviors>
                         </Image>
 
+                        <CheckBox IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                  Command="{Binding ToggleGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                  CommandParameter="{Binding .}"
+                                  VerticalOptions="Center" />
+
                         <Label Text="{Binding Title}"
                                VerticalOptions="Center"
-                               FontSize="Medium"
-                               Margin="5, 0, 0, 0"/>
+                               FontSize="Medium" />
                     </HorizontalStackLayout>
                     <HorizontalStackLayout>
                         <BoxView WidthRequest="1"
@@ -41,14 +56,17 @@
                                         IsVisible="{Binding IsOpen}">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:SearchTermViewModel">
-                                    <Label FontSize="Small">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span Text="• " />
-                                                <Span Text="{Binding Title}" />
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
+                                    <HorizontalStackLayout Spacing="6"
+                                                           Padding="50, 0, 0, 0">
+                                        <CheckBox IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                                  IsEnabled="{Binding IsEnabled, Source={RelativeSource AncestorType={x:Type viewmodels:GroupViewModel}}}"
+                                                  Command="{Binding ToggleSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                  CommandParameter="{Binding .}" />
+
+                                        <Label FontSize="Small"
+                                               VerticalOptions="Center"
+                                               Text="{Binding Title}" />
+                                    </HorizontalStackLayout>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
 
