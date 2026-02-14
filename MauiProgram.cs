@@ -56,6 +56,7 @@ public static class MauiProgram
 
         // Popups
         services.AddTransientPopup<EditStringPopup, EditStringPopupViewModel>();
+        services.AddTransientPopup<QuestionPopup, QuestionPopupViewModel>();
 
 
 #if WINDOWS

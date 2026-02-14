@@ -78,6 +78,9 @@
 	  <MauiXaml Update="Popups\EditStringPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Popups\QuestionPopup.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\CurrentWallpaperView.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

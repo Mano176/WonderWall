@@ -52,6 +52,9 @@ public partial class GroupViewModel : ObservableObject
     [ObservableProperty]
     private double iconRotation;
 
+    [ObservableProperty]
+    private bool isHovered;
+
     partial void OnIsOpenChanged(bool value)
     {
         IconRotation = value ? 90 : 0;

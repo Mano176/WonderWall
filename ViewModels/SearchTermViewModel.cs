@@ -2,7 +2,7 @@
 
 namespace WonderWall.ViewModels;
 
-public class SearchTermViewModel : ObservableObject
+public partial class SearchTermViewModel : ObservableObject
 {
     public readonly SearchTerm searchTerm;
 
@@ -36,4 +36,7 @@ public class SearchTermViewModel : ObservableObject
             }
         }
     }
+
+    [ObservableProperty]
+    private bool isHovered;
 }

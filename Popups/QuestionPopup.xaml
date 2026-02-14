@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:viewmodels="clr-namespace:WonderWall.ViewModels"
+               x:Class="WonderWall.Popups.QuestionPopup"
+               x:TypeArguments="x:Boolean"
+               x:DataType="viewmodels:QuestionPopupViewModel"
+               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+
+    <VerticalStackLayout Padding="20"
+                         Spacing="15">
+        <Label Text="{Binding Question}" />
+
+        <HorizontalStackLayout Spacing="10"
+                               HorizontalOptions="End">
+            <Button Text="{Binding NoString}"
+                    Command="{Binding NoCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="{Binding YesString}"
+                    Command="{Binding YesCommand}" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</toolkit:Popup>

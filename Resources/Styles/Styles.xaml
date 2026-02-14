@@ -6,7 +6,7 @@
         <Setter Property="FontFamily"
                 Value="MaterialIcons" />
         <Setter Property="Size"
-                Value="40" />
+                Value="30" />
         <Setter Property="Color"
                 Value="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
     </Style>
@@ -188,6 +188,8 @@
     <Style TargetType="ImageButton">
         <Setter Property="Opacity"
                 Value="1" />
+        <Setter Property="BackgroundColor"
+                Value="Transparent" />
         <Setter Property="BorderColor"
                 Value="Transparent" />
         <Setter Property="BorderWidth"
@@ -195,9 +197,15 @@
         <Setter Property="CornerRadius"
                 Value="0" />
         <Setter Property="MinimumHeightRequest"
-                Value="44" />
+                Value="35" />
         <Setter Property="MinimumWidthRequest"
-                Value="44" />
+                Value="35" />
+        <Setter Property="WidthRequest"
+                Value="35" />
+        <Setter Property="HeightRequest"
+                Value="35" />
+        <Setter Property="Padding"
+                Value="5" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -208,7 +216,12 @@
                                     Value="0.5" />
                         </VisualState.Setters>
                     </VisualState>
-                    <VisualState x:Name="PointerOver" />
+                    <VisualState x:Name="PointerOver">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor"
+                                    Value="#78FFFFFF" />
+                        </VisualState.Setters>
+                    </VisualState>
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>

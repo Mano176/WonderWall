@@ -5,6 +5,7 @@
              xmlns:behaviors="clr-namespace:WonderWall.Behaviors"
              xmlns:local="clr-namespace:WonderWall"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:converter="clr-namespace:WonderWall.Converter"
              x:Class="WonderWall.Views.GroupsView"
              x:DataType="viewmodels:GroupsViewModel">
 
@@ -13,6 +14,7 @@
             <toolkit:VariableMultiValueConverter x:Key="AndMultiConverter"
                                                  ConditionType="All"
                                                  Count="2" />
+            <converter:MultiParamConverter x:Key="MultiParamConverter" />
         </ResourceDictionary>
     </ContentView.Resources>
 
@@ -23,9 +25,23 @@
 
                     <HorizontalStackLayout HorizontalOptions="Fill"
                                            Spacing="6">
+
+                        <HorizontalStackLayout.Triggers>
+                            <DataTrigger TargetType="HorizontalStackLayout"
+                                         Binding="{Binding IsHovered}"
+                                         Value="True">
+                                <Setter Property="BackgroundColor"
+                                        Value="#3CFFFFFF" />
+                            </DataTrigger>
+                        </HorizontalStackLayout.Triggers>
+
                         <HorizontalStackLayout.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding SelectGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
                                                   CommandParameter="{Binding .}" />
+                            <PointerGestureRecognizer PointerEnteredCommand="{Binding PointerEnteredGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                      PointerEnteredCommandParameter="{Binding .}"
+                                                      PointerExitedCommand="{Binding PointerExitedGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                      PointerExitedCommandParameter="{Binding .}" />
                         </HorizontalStackLayout.GestureRecognizers>
 
                         <Image>
@@ -46,18 +62,74 @@
                         <Label Text="{Binding Title}"
                                VerticalOptions="Center"
                                FontSize="Medium" />
+
+                        <HorizontalStackLayout Spacing="6"
+                                               IsVisible="{OnIdiom Phone=True, Default=False}">
+
+                            <HorizontalStackLayout.Triggers>
+                                <DataTrigger TargetType="HorizontalStackLayout"
+                                             Binding="{Binding IsHovered}"
+                                             Value="True">
+                                    <Setter Property="IsVisible"
+                                            Value="True" />
+                                </DataTrigger>
+                            </HorizontalStackLayout.Triggers>
+
+                            <ImageButton Command="{Binding EditGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                         CommandParameter="{Binding .}">
+                                <ImageButton.Source>
+                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Edit}" />
+                                </ImageButton.Source>
+                            </ImageButton>
+
+                            <ImageButton Command="{Binding DeleteGroupCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                         CommandParameter="{Binding .}">
+                                <ImageButton.Source>
+                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Delete}" />
+                                </ImageButton.Source>
+                            </ImageButton>
+
+                            <ImageButton Command="{Binding SetGroupAsWallpaperCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                         CommandParameter="{Binding .}">
+                                <ImageButton.Source>
+                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Wallpaper}" />
+                                </ImageButton.Source>
+                            </ImageButton>
+                        </HorizontalStackLayout>
                     </HorizontalStackLayout>
-                    <HorizontalStackLayout>
+                    <Grid RowDefinitions="*"
+                          ColumnDefinitions="Auto, *">
                         <BoxView WidthRequest="1"
                                  Color="Gray"
-                                 Margin="10, 0, 10, 0"/>
+                                 Margin="10, 0, 10, 0"
+                                 Grid.Row="0"
+                                 Grid.Column="0" />
 
                         <CollectionView ItemsSource="{Binding SearchTerms}"
-                                        IsVisible="{Binding IsOpen}">
+                                        IsVisible="{Binding IsOpen}"
+                                        Grid.Row="0"
+                                        Grid.Column="1">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:SearchTermViewModel">
                                     <HorizontalStackLayout Spacing="6"
                                                            Padding="50, 0, 0, 0">
+
+                                        <HorizontalStackLayout.Triggers>
+                                            <DataTrigger TargetType="HorizontalStackLayout"
+                                                         Binding="{Binding IsHovered}"
+                                                         Value="True">
+                                                <Setter Property="BackgroundColor"
+                                                        Value="#3CFFFFFF" />
+                                            </DataTrigger>
+                                        </HorizontalStackLayout.Triggers>
+
+                                        <HorizontalStackLayout.GestureRecognizers>
+                                            <PointerGestureRecognizer PointerEnteredCommand="{Binding PointerEnteredSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                                      PointerEnteredCommandParameter="{Binding .}"
+                                                                      PointerExitedCommand="{Binding PointerExitedSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                                      PointerExitedCommandParameter="{Binding .}" />
+                                        </HorizontalStackLayout.GestureRecognizers>
+
                                         <CheckBox IsChecked="{Binding IsEnabled, Mode=OneWay}"
                                                   IsEnabled="{Binding IsEnabled, Source={RelativeSource AncestorType={x:Type viewmodels:GroupViewModel}}}"
                                                   Command="{Binding ToggleSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
@@ -66,6 +138,47 @@
                                         <Label FontSize="Small"
                                                VerticalOptions="Center"
                                                Text="{Binding Title}" />
+
+                                        <HorizontalStackLayout Spacing="6"
+                                                               IsVisible="{OnIdiom Phone=True, Default=False}">
+                                            <HorizontalStackLayout.Triggers>
+                                                <DataTrigger TargetType="HorizontalStackLayout"
+                                                             Binding="{Binding IsHovered}"
+                                                             Value="True">
+                                                    <Setter Property="IsVisible"
+                                                            Value="True" />
+                                                </DataTrigger>
+                                            </HorizontalStackLayout.Triggers>
+
+                                            <ImageButton Command="{Binding EditSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                         CommandParameter="{Binding .}">
+                                                <ImageButton.Source>
+                                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Edit}" />
+                                                </ImageButton.Source>
+                                            </ImageButton>
+
+                                            <ImageButton Command="{Binding DeleteSearchTermCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}">
+                                                <ImageButton.CommandParameter>
+                                                    <MultiBinding Converter="{StaticResource MultiParamConverter}">
+                                                        <Binding Path="."
+                                                                 Source="{RelativeSource AncestorType={x:Type viewmodels:GroupViewModel}}" />
+                                                        <Binding Path="." />
+                                                    </MultiBinding>
+                                                </ImageButton.CommandParameter>
+
+                                                <ImageButton.Source>
+                                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Delete}" />
+                                                </ImageButton.Source>
+                                            </ImageButton>
+
+                                            <ImageButton Command="{Binding SetSearchTermAsWallpaperCommand, Source={RelativeSource AncestorType={x:Type viewmodels:GroupsViewModel}}}"
+                                                         CommandParameter="{Binding .}">
+
+                                                <ImageButton.Source>
+                                                    <FontImageSource Glyph="{x:Static local:MaterialIcons.Wallpaper}" />
+                                                </ImageButton.Source>
+                                            </ImageButton>
+                                        </HorizontalStackLayout>
                                     </HorizontalStackLayout>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
@@ -81,7 +194,7 @@
                                         CommandParameter="{Binding .}" />
                             </CollectionView.Footer>
                         </CollectionView>
-                    </HorizontalStackLayout>
+                    </Grid>
                 </VerticalStackLayout>
             </DataTemplate>
         </CollectionView.ItemTemplate>
